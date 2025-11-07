@@ -16,11 +16,7 @@
 
 
     <dependencies>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>22.0.2</version>
-        </dependency>
+
 
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -44,7 +40,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.yourpackage.MainApp</mainClass>
+                    <mainClass>com.example.view.GameView</mainClass>
                 </configuration>
             </plugin>
         </plugins>
