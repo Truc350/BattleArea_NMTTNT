@@ -14,19 +14,21 @@ public abstract class Hero {
 
     public Hero(String name, int maxHP, int maxMP, double position, int attack, int defense) {
         this.name = name;
-        this.maxHP = maxHP;
-        this.hp = maxHP;
-        this.maxMP = maxMP;
-        this.mp = maxMP;
+        this.maxHP = Math.min(100, maxHP); // Giới hạn maxHP là 100
+        this.hp = Math.min(100, maxHP);    // Ban đầu hp = maxHP, giới hạn 100
+        this.maxMP = Math.min(100, maxMP); // Giới hạn maxMP là 100
+        this.mp = Math.min(100, maxMP);    // Ban đầu mp = maxMP, giới hạn 100
         this.position = position;
         this.attack = attack;
         this.defense = defense;
         initSkills();
     }
 
-    public void initSkills() {
-        skills.add(new Skill("Basic Attack", 0, 0, attack, 0, 5));//đánh thường , hồi 5mp
-        skills.add(new Skill("Mana Regen", 0, 2, 0, 0, 15));// hoi 15mp
+    protected void initSkills() {
+        // Basic Attack: KHÔNG hồi mana (healMP=0), luôn dùng
+        skills.add(new Skill("Basic Attack", 0, 0, attack, 0, 0));
+        // Mana Regen: Hồi mana
+        skills.add(new Skill("Mana Regen", 0, 2, 0, 0, 15));
     }
 
     public boolean useSkill(String skillName, long currentTime, Hero target) {
@@ -38,7 +40,8 @@ public abstract class Hero {
         System.out.println(name + "Không đủ mana hoặc skill còn cooldown!");
         return false;
     }
-    public void takeDamage(int damage){
+
+    public void takeDamage(int damage) {
         int effective = Math.max(0, damage - defense);
         setHp(hp - effective);
     }
@@ -56,7 +59,7 @@ public abstract class Hero {
     }
 
     public void setHp(int hp) {
-        this.hp = Math.max(0, Math.min(maxHP, hp));
+        this.hp = Math.max(0, Math.min(100, hp));
     }
 
     public int getMaxHP() {
@@ -72,7 +75,7 @@ public abstract class Hero {
     }
 
     public void setMp(int mp) {
-        this.mp = Math.max(0,Math.min(maxMP, mp));
+        this.mp = Math.max(0, Math.min(100, mp));
     }
 
     public int getMaxMP() {
@@ -114,4 +117,51 @@ public abstract class Hero {
     public void setSkills(List<Skill> skills) {
         this.skills = skills;
     }
+
+
+    // tạo hero theo loại
+    public static Hero getHero(HeroType type, String name, double position) {
+        int maxHP = 100;
+        int maxMP = 100;
+        int attack = 15;
+        int defense = 10;
+
+        // Stats khác nhau theo loại
+        switch (type) {
+            case FIGHTER:// Tanky, damage cao
+                attack = 20;
+                defense = 15;
+                break;
+            case MARKSMAN:// Damage cực cao, yếu thủ
+                attack = 25;
+                defense = 5;
+                break;
+            case MAGE:// Phép mạnh, MP đầy
+                attack = 18;
+                maxMP = 100;
+            case SUPPORT:// Heal tốt, sống dai
+                attack = 10;
+                defense = 12;
+                break;
+        }
+        Hero hero;
+        switch (type) {
+            case FIGHTER:
+                hero = new Fighter(name, maxHP, maxMP, position, attack, defense);
+                break;
+            case MARKSMAN:
+                hero = new Marksman(name, maxHP, maxMP, position, attack, defense);
+                break;
+            case MAGE:
+                hero = new Mage(name, maxHP, maxMP, position, attack, defense);
+                break;
+            case SUPPORT:
+                hero = new Support(name, maxHP, maxMP, position, attack, defense);
+                break;
+            default:
+                hero = new Fighter(name, maxHP, maxMP, position, attack, defense);
+        }
+        return hero;
+    }
+
 }
