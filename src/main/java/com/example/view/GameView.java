@@ -2,36 +2,47 @@ package com.example.view;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.web.WebView;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 public class GameView extends Application {
-    private WebView webView;
 
     @Override
     public void start(Stage primaryStage) {
-        webView = new WebView();
-        // Nhúng mô hình 3D Sketchfab (thay your-model-id bằng ID thực tế)
-        webView.getEngine().load("https://sketchfab.com/models/your-model-id/embed");
 
-        Scene scene = new Scene(webView, 800, 600);
+        Pane root = new Pane();
+
+        // ====== LOAD BACKGROUND ======
+        Image bg = new Image(getClass().getResourceAsStream("/img/sanDau/sandau1.jpg"));
+        ImageView bgView = new ImageView(bg);
+        bgView.setFitWidth(1400);
+        bgView.setFitHeight(900);
+
+        // ====== PLAYER BÊN TRÁI ======
+        Image playerImg = new Image(getClass().getResourceAsStream("/img/character/dausi.png"));
+        ImageView player = new ImageView(playerImg);
+        player.setFitWidth(250);
+        player.setFitHeight(300);
+        player.setLayoutX(150);   // bên trái
+        player.setLayoutY(450);   // thấp xuống sàn
+
+        // ====== ENEMY BÊN PHẢI ======
+        Image enemyImg = new Image(getClass().getResourceAsStream("/img/character/img.png"));
+        ImageView enemy = new ImageView(enemyImg);
+        enemy.setFitWidth(250);
+        enemy.setFitHeight(300);
+        enemy.setLayoutX(1400 - 250 - 150); // bên phải
+        enemy.setLayoutY(450);
+
+        root.getChildren().addAll(bgView, player, enemy);
+
+        Scene scene = new Scene(root, 1400, 900);
+
+        primaryStage.setTitle("Battle Arena 2D");
         primaryStage.setScene(scene);
-        primaryStage.setTitle("Game UI với Sketchfab");
         primaryStage.show();
-    }
-
-    public void updateHeroDisplay(String heroName) {
-        // Cập nhật mô hình 3D dựa trên heroName (cần API Sketchfab để thay đổi model)
-        webView.getEngine().load("https://sketchfab.com/models/" + getModelId(heroName) + "/embed");
-    }
-
-    private String getModelId(String heroName) {
-        // Logic ánh xạ tên hero với ID Sketchfab (giả lập)
-        switch (heroName.toLowerCase()) {
-            case "warrior": return "warrior-id";
-            case "ninja": return "ninja-id";
-            default: return "default-id";
-        }
     }
 
     public static void main(String[] args) {
