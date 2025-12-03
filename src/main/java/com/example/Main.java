@@ -1,24 +1,48 @@
+// File: src/com/example/model/Main.java
 package com.example;
 
-import com.example.model.AIplayer;
-import com.example.model.Fighter;
+import com.example.model.AIPlayer;
+import com.example.model.Game;
+import com.example.model.Player;
 
 public class Main {
     public static void main(String[] args) {
+        Player player = new Player(null);
+        player.selectPlayerHero(0.0); // Người chơi chọn tướng
+
+        AIPlayer ai = new AIPlayer("AI GOD", 100, 100, 1.0, 22, 12);
+        Game game = new Game(player, ai);
+        game.start();
+
         long currentTime = System.currentTimeMillis();
-        Fighter playerHero = new Fighter("Warrior", 120, 60, 0.0, 15, 10);
-        AIplayer ai = new AIplayer("Ninja", 100, 50, 1.5, 12, 8);
 
-        System.out.println("MP ban đầu " + playerHero.getName() + ": " + playerHero.getMp() + ", HP " + ai.getName() + ": " + ai.getHp());
-        playerHero.useSkill("Basic Attack", currentTime,ai);// hồi 5mp
-        System.out.println("Sau Basic Attack, MP " + playerHero.getName() + ": " + playerHero.getMp() + ", HP " + ai.getName() + ": " + ai.getHp());
-        playerHero.useSkill("Mana Regen", currentTime, playerHero);// hồi 15mp
-        System.out.println("Sau Mana Regen, MP " + playerHero.getName() + ": " + playerHero.getMp());
+        while (player.getHero().getHp() > 0 && ai.getHp() > 0) {
+            System.out.println("\n--- LƯỢT MỚI ---");
+            System.out.println("AI: " + ai.getHp() + "/" + ai.getMaxHP() + " HP | " + ai.getMp() + " MP");
+            System.out.println("Bạn: " + player.getHero().getHp() + "/" + player.getHero().getMaxHP() + " HP | " + player.getHero().getMp() + " MP");
 
-        ai.chooseBestAction(currentTime,playerHero);
-        System.out.println();
-        System.out.println("Sau lượt AI, HP " + playerHero.getName() + ": " + playerHero.getHp() + ", MP " + ai.getName() + ": " + ai.getMp());
+            if (game.isRange()) {
+                String aiMove = ai.chooseBestAction(currentTime, player.getHero(), game);
+                System.out.println("[AI] " + aiMove);
 
+                // Người chơi phản công
+                System.out.print("Bạn dùng skill (hoặc 'basic'): ");
+                String playerMove = new java.util.Scanner(System.in).nextLine();
+                if (playerMove.isEmpty() || playerMove.equalsIgnoreCase("basic")) {
+                    ai.takeDamage(player.getHero().getAttack());
+                } else {
+                    player.getHero().useSkill(playerMove, currentTime, ai);
+                }
+            } else {
+                System.out.println("[AI] Đang di chuyển lại gần...");
+            }
 
+            currentTime += 1000;
+            try { Thread.sleep(800); } catch (Exception e) {}
+        }
+
+        System.out.println("\n=== KẾT THÚC TRẬN ĐẤU ===");
+        if (ai.getHp() <= 0) System.out.println("BẠN THẮNG!");
+        else System.out.println("AI THẮNG!");
     }
 }
