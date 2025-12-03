@@ -9,8 +9,8 @@ public class Fighter extends  Hero {
     @Override
     public void initSkills() {
         super.initSkills();
-        skills.add(new Skill("Rage Strike", 15, 8, attack +10, 0,0));
-        skills.add(new Skill("Fury Burst", 20, 12, attack +20, 0,0));
-        skills.add(new Skill("Ultimate Rage", 30, 20, attack * 2, 0,0));
+        skills.add(new Skill("Rage Strike", 10, 4, attack +6, 0,0));
+        skills.add(new Skill("Fury Burst", 15, 6, attack +12, 0,0));
+        skills.add(new Skill("Ultimate Rage", 22, 10, (int)(attack * 1.8), 0,0));
     }
 }

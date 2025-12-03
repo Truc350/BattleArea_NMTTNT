@@ -19,10 +19,10 @@ public class AIPlayer extends Hero {
         skills.add(new Skill("Ultimate Rage", 30, 20, attack * 2, 0, 0));
     }
 
-    // ====================== CHỌN HÀNH ĐỘNG TỐI ƯU ======================
+
     public String chooseBestAction(long currentTime, Hero opponent, Game game) {
         if (!game.isRange()) {
-            System.out.println("[AI] Đang di chuyển lại gần đối thủ...");
+            System.out.println("ai dang di chuyển lại gần đối thủ...");
             return "Move Closer";
         }
 
@@ -47,7 +47,7 @@ public class AIPlayer extends Hero {
             }
         }
 
-        System.out.println("[AI] Chọn: " + bestMove +
+        System.out.println("AI Chọn: " + bestMove +
                 " (điểm: " + bestScore + ", thuật toán: " +
                 (useAlphaBeta ? "Alpha-Beta" : "Minimax") + ")");
 
@@ -59,7 +59,7 @@ public class AIPlayer extends Hero {
         return bestMove;
     }
 
-    // ====================== MINIMAX THEO MẪU BẠN GỬI ======================
+    // minimax
     private int minimax(boolean maxmin, GameState state, int depth) {
         // --- Trường hợp cơ sở ---
         if (depth == 0 || state.isTerminal()) {
@@ -96,7 +96,7 @@ public class AIPlayer extends Hero {
         }
     }
 
-    // ====================== ALPHA-BETA (VẪN GIỮ) ======================
+    //alpha beta
     private int alphaBeta(GameState state, int depth, boolean maximizingPlayer, int alpha, int beta) {
         if (depth == 0 || state.isTerminal()) {
             return evaluate(state);
@@ -126,17 +126,17 @@ public class AIPlayer extends Hero {
         }
     }
 
-    // ====================== TẠO TRẠNG THÁI CON ======================
+    // tao trang thai con
     private List<GameState> generateSuccessors(GameState state, boolean maxPlayer) {
         List<GameState> list = new ArrayList<>();
         Hero current = maxPlayer ? state.aiHero : state.playerHero;
-        Hero enemy   = maxPlayer ? state.playerHero : state.aiHero;
+        Hero enemy = maxPlayer ? state.playerHero : state.aiHero;
 
         // Basic Attack
         Hero aiCopy = deepCopy(state.aiHero);
         Hero playerCopy = deepCopy(state.playerHero);
         Hero attacker = maxPlayer ? aiCopy : playerCopy;
-        Hero target   = maxPlayer ? playerCopy : aiCopy;
+        Hero target = maxPlayer ? playerCopy : aiCopy;
 
         target.takeDamage(attacker.attack);
         list.add(new GameState(aiCopy, playerCopy, state.time + 1000, "Basic Attack", attacker.attack));
@@ -147,7 +147,7 @@ public class AIPlayer extends Hero {
                 aiCopy = deepCopy(state.aiHero);
                 playerCopy = deepCopy(state.playerHero);
                 attacker = maxPlayer ? aiCopy : playerCopy;
-                target   = maxPlayer ? playerCopy : aiCopy;
+                target = maxPlayer ? playerCopy : aiCopy;
 
                 if (attacker.useSkill(skill.getName(), state.time, target)) {
                     list.add(new GameState(aiCopy, playerCopy, state.time + 1000,
@@ -158,7 +158,6 @@ public class AIPlayer extends Hero {
         return list;
     }
 
-    // ====================== ĐÁNH GIÁ TRẠNG THÁI ======================
     private int evaluate(GameState state) {
         if (state.aiHero.hp <= 0) return -999999;
         if (state.playerHero.hp <= 0) return 999999;
@@ -169,15 +168,15 @@ public class AIPlayer extends Hero {
         score += state.aiHero.mp * 4;
         score -= state.playerHero.mp * 2;
 
-        if (state.playerHero.hp <= 40) score += 1200;
-        if (state.playerHero.hp <= 20) score += 2500;
-        if (state.aiHero.hp <= 30) score -= 1800;
+        if (state.playerHero.hp <= 25) score += 400;
+        if (state.playerHero.hp <= 12) score += 800;
+        if (state.aiHero.hp <= 20) score -= 600;
 
         // Bonus theo class
-        if (state.aiHero instanceof Fighter && state.aiHero.mp >= 30) score += 800;
-        if (state.aiHero instanceof Mage && state.aiHero.mp >= 35 && state.playerHero.hp <= 60) score += 1500;
-        if (state.aiHero instanceof Marksman && state.playerHero.hp <= 50) score += 2000;
-        if (state.aiHero instanceof Support && state.aiHero.hp <= 40) score += 1200;
+        if (state.aiHero instanceof Fighter && state.aiHero.mp >= 22) score += 300;
+        if (state.aiHero instanceof Mage && state.aiHero.mp >= 25 && state.playerHero.hp <= 40) score += 500;
+        if (state.aiHero instanceof Marksman && state.playerHero.hp <= 35) score += 700;
+        if (state.aiHero instanceof Support && state.aiHero.hp <= 30) score += 400;
 
         return score;
     }
