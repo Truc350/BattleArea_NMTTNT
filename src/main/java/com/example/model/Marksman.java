@@ -3,7 +3,7 @@ package com.example.model;
 import java.util.Random;
 
 public class Marksman extends Hero {
-    private float critRate = 0.3f;
+    float critRate = 0.3f;// tỉ lệ chí mạng
 
     public Marksman(String name, int maxHP, int maxMP, double position, int attack, int defense) {
         super(name, maxHP, maxMP, position, attack, defense);
@@ -17,14 +17,22 @@ public class Marksman extends Hero {
         skills.add(new Skill("Deadly Arrow", 25, 15, attack * 3, 0, 0));
     }
 
+    // Trong Marksman.java
     @Override
     public boolean useSkill(String skillName, long currentTime, Hero target) {
-        if (super.useSkill(skillName, currentTime, target)) {
-            if (new Random().nextFloat() < critRate) {
-                target.takeDamage(attack * 2);
-                System.out.println(name + " chí mạng");
+        for (Skill skill : skills) {
+            if (skill.getName().equals(skillName) && skill.canUse(currentTime, mp)) {
+                int finalDamage = skill.getDamage();
+                boolean isCrit = new Random().nextFloat() < critRate;
+                if (isCrit) {
+                    finalDamage = (int) (finalDamage * 2.0);
+                    System.out.println(name + " CHÍ MẠNG! x2");
+                }
+                mp -= skill.getMpCost();
+                target.takeDamage(finalDamage);
+                skill.setLastUsedTime(currentTime);
+                return true;
             }
-            return true;
         }
         return false;
     }

@@ -139,6 +139,7 @@ public abstract class Hero {
             case MAGE:// Phép mạnh, MP đầy
                 attack = 18;
                 maxMP = 100;
+                break;
             case SUPPORT:// Heal tốt, sống dai
                 attack = 10;
                 defense = 12;
