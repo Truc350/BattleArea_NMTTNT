@@ -129,20 +129,20 @@ public abstract class Hero {
         // Stats khác nhau theo loại
         switch (type) {
             case FIGHTER:// Tanky, damage cao
-                attack = 20;
-                defense = 15;
+                attack = 16;
+                defense = 14;
                 break;
             case MARKSMAN:// Damage cực cao, yếu thủ
-                attack = 25;
-                defense = 5;
+                attack = 20;
+                defense = 7;
                 break;
             case MAGE:// Phép mạnh, MP đầy
-                attack = 18;
+                attack = 14;
                 maxMP = 100;
                 break;
             case SUPPORT:// Heal tốt, sống dai
-                attack = 10;
-                defense = 12;
+                attack = 7;
+                defense = 13;
                 break;
         }
         Hero hero;
