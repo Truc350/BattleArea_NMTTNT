@@ -14,6 +14,12 @@ public class HealthBar extends Pane {
     private double mpWidth = 180;
     private double mpHeight = 8;
 
+    private int maxHp = 100;
+    private int currentHp = 100;
+
+    private int maxMp = 100;
+    private int currentMp = 100;
+
     public HealthBar() {
         hpBar = new Rectangle(hpWidth, hpHeight);
         hpBar.setFill(Color.RED);
@@ -26,11 +32,48 @@ public class HealthBar extends Pane {
         getChildren().addAll(hpBar, mpBar);
     }
 
-    public void setHp(double percent) {
+    // HP
+    public int getHp() {
+        return currentHp;
+    }
+
+    public void setHp(int hp) {
+        currentHp = Math.max(0, Math.min(hp, maxHp));
+        updateHpBar();
+    }
+
+    private void updateHpBar() {
+        double percent = (double) currentHp / maxHp;
         hpBar.setWidth(hpWidth * percent);
     }
 
-    public void setMp(double percent) {
+    // --- MP ---
+    public int getMp() {
+        return currentMp;
+    }
+
+    public void setMp(int mp) {
+        currentMp = Math.max(0, Math.min(mp, maxMp));
+        updateMpBar();
+    }
+
+    private void updateMpBar() {
+        double percent = (double) currentMp / maxMp;
         mpBar.setWidth(mpWidth * percent);
+    }
+
+    public void takeDamage(int hpDmg, int mpDmg) {
+        setHp(currentHp - hpDmg);
+        setMp(currentHp - mpDmg);
+    }
+
+    // --- MP ---
+    public void setMpPercent(double percent) {
+        mpBar.setWidth(mpWidth * percent);
+    }
+
+    public void setMaxHp(int maxHp) {
+        this.maxHp = maxHp;
+        setHp(currentHp); // cập nhật lại thanh
     }
 }

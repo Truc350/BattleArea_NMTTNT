@@ -9,8 +9,10 @@ import javafx.scene.layout.VBox;
 
 public class PlayerSkillBar extends Pane {
     Button attackBtn, a1Btn, a2Btn, a3Btn, defendBtn, healBtn;
+    private ArenaView arena;
 
-    public PlayerSkillBar() {
+    public PlayerSkillBar(ArenaView arena) {
+        this.arena = arena;
 
         a1Btn = createCircleButton("A1", "#3498db");
         a2Btn = createCircleButton("A2", "#f1c40f");
@@ -38,6 +40,52 @@ public class PlayerSkillBar extends Pane {
                 + "-fx-background-radius:18;");
         attackBtn.setLayoutX(95);
         attackBtn.setLayoutY(40);
+
+        // Hieu ung tan cong
+        attackBtn.setOnAction(e ->
+                SkillEffect.castSkill(
+                        arena,
+                        arena.getPlayerView().getLayoutX() - 20,
+                        arena.getPlayerView().getLayoutY() + 60,
+                        "/img/attackEffect/chieu2.png", 20, 5,
+                        "/img/explosion/explosion_thuong.png", 120
+                )
+        );
+
+        a1Btn.setOnAction(e ->
+                SkillEffect.castSkill(
+                        arena,
+                        arena.getPlayerView().getLayoutX() - 20,
+                        arena.getPlayerView().getLayoutY() + 60,
+                        "/img/attackEffect/chieu4.png",
+                        30, 10,
+                        "/img/explosion/explosion_1.png", 150
+
+                )
+        );
+
+        a2Btn.setOnAction(e ->
+                SkillEffect.castSkill(
+                        arena,
+                        arena.getPlayerView().getLayoutX() - 20,
+                        arena.getPlayerView().getLayoutY() + 60,
+                        "/img/attackEffect/chieu4.png",
+                        35, 15,
+                        "/img/explosion/explosion_2.png", 180
+                )
+        );
+
+        a3Btn.setOnAction(e ->
+                SkillEffect.castSkill(
+                        arena,
+                        arena.getPlayerView().getLayoutX() - 20,
+                        arena.getPlayerView().getLayoutY() + 60,
+                        "/img/attackEffect/chieu4.png",
+                        40, 25,
+                        "/img/explosion/explosion_3.png", 220
+                )
+        );
+
 
         getChildren().addAll(supportRow, skillColumn, attackBtn);
         setPrefSize(260, 150);
