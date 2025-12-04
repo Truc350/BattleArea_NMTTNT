@@ -29,12 +29,12 @@ public class ArenaView extends Pane{
         player.setLayoutY(300);
 
         // thanh máu của AI
-        enemyBar = new HealthBar();
+        enemyBar = new HealthBar(HealthBar.Align.LEFT);
         enemyBar.setLayoutX(enemy.getLayoutX() + 70);
         enemyBar.setLayoutY(enemy.getLayoutY() - 80);
 
         // thanh máu của player
-        playerBar = new HealthBar();
+        playerBar = new HealthBar(HealthBar.Align.RIGHT);
         playerBar.setLayoutX(player.getLayoutX() + 70);
         playerBar.setLayoutY(player.getLayoutY() - 80);
 

@@ -63,7 +63,6 @@ public class SkillEffect {
                             ex, explosionSize);
 
                     // trừ máu của enemy
-//                    int curr = enemyBar.getHp();
                     enemyBar.takeDamage(damage, 0);
 
                     return;

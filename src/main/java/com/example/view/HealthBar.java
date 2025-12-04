@@ -3,10 +3,19 @@ package com.example.view;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 
 public class HealthBar extends Pane {
+
+    public enum Align {
+        LEFT, RIGHT
+    }
+
     private Rectangle hpBar;
     private Rectangle mpBar;
+
+    private Text hpText;
+    private Text mpText;
 
     private double hpWidth = 180;
     private double hpHeight = 14;
@@ -20,7 +29,11 @@ public class HealthBar extends Pane {
     private int maxMp = 100;
     private int currentMp = 100;
 
-    public HealthBar() {
+    private Align align;
+
+    public HealthBar(Align align) {
+        this.align = align;
+
         hpBar = new Rectangle(hpWidth, hpHeight);
         hpBar.setFill(Color.RED);
 
@@ -28,8 +41,40 @@ public class HealthBar extends Pane {
         mpBar.setFill(Color.BLUE);
         mpBar.setLayoutY(hpHeight);
 
+        hpText = new Text(currentHp + "");
+        hpText.setFill(Color.WHITE);
+        hpText.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+
+        mpText = new Text(currentMp + "");
+        mpText.setFill(Color.WHITE);
+        mpText.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+
         setPrefSize(hpWidth, hpHeight + mpHeight);
-        getChildren().addAll(hpBar, mpBar);
+
+        layoutBars();
+        getChildren().addAll(hpBar, mpBar, hpText, mpText);
+    }
+
+    // =====================
+    // LAYOUT TRÁI / PHẢI
+    // =====================
+    private void layoutBars() {
+        if (align == Align.RIGHT) {
+            // Player → text nằm bên phải
+            hpText.setX(hpWidth + 10);
+            hpText.setY(12);
+
+            mpText.setX(mpWidth + 10);
+            mpText.setY(hpHeight + mpHeight + 5);
+
+        } else {
+            // Enemy → text nằm bên trái
+            hpText.setX(-35);
+            hpText.setY(12);
+
+            mpText.setX(-35);
+            mpText.setY(hpHeight + mpHeight + 5);
+        }
     }
 
     // HP
@@ -39,7 +84,10 @@ public class HealthBar extends Pane {
 
     public void setHp(int hp) {
         currentHp = Math.max(0, Math.min(hp, maxHp));
-        updateHpBar();
+        double percent = (double) currentHp / maxHp;
+//        updateHpBar();
+        hpBar.setWidth(hpWidth * percent);
+        hpText.setText(currentHp + "");
     }
 
     private void updateHpBar() {
@@ -54,7 +102,12 @@ public class HealthBar extends Pane {
 
     public void setMp(int mp) {
         currentMp = Math.max(0, Math.min(mp, maxMp));
-        updateMpBar();
+//        updateMpBar();
+
+        double percent = (double) currentMp / maxMp;
+
+        mpBar.setWidth(mpWidth * percent);
+        mpText.setText(currentMp + "");
     }
 
     private void updateMpBar() {
