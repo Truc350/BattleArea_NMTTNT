@@ -10,7 +10,7 @@ public class GameView extends Application {
     @Override
     public void start(Stage primaryStage) {
         ArenaView arena = new ArenaView();
-        PlayerSkillBar skillBar = new PlayerSkillBar();
+        PlayerSkillBar skillBar = new PlayerSkillBar(arena);
 
         // đặt vị trí UI
         skillBar.setLayoutX(1000);
