@@ -39,6 +39,26 @@ public class ArenaView extends Pane{
         playerBar.setLayoutY(player.getLayoutY() - 80);
 
         getChildren().addAll(bg, enemy, player, enemyBar, playerBar);
+
+        // di chuyen player
+        setOnKeyPressed(event -> {
+            double step = 10; // tốc độ di chuyển mỗi lần nhấn
+
+            switch (event.getCode()) {
+                case LEFT: // phím mũi tên trái
+                    player.setLayoutX(player.getLayoutX() - step);
+                    break;
+
+                case RIGHT: // phím mũi tên phải
+                    player.setLayoutX(player.getLayoutX() + step);
+                    break;
+            }
+
+            // Cập nhật vị trí thanh máu chạy theo nhân vật
+            playerBar.setLayoutX(player.getLayoutX() + 70);
+        });
+
+        setFocusTraversable(true);
     }
 
     public ImageView getPlayerView() { return player; }
