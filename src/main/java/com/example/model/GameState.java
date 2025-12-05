@@ -8,7 +8,7 @@ public class GameState {
     public String moveName;
     public int damageDealt;
 
-    // Constructor 3 tham số - DÙNG CHO ROOT (CHỖ BẠN ĐANG GỌI)
+    // Constructor dùng cho root
     public GameState(Hero ai, Hero player, long currentTime) {
         this.aiHero = ai;
         this.playerHero = player;
@@ -17,7 +17,7 @@ public class GameState {
         this.damageDealt = 0;
     }
 
-    // Constructor 5 tham số - dùng khi tạo các trạng thái con
+    // dùng khi tạo các trạng thái con
     public GameState(Hero ai, Hero player, long time, String move, int dmg) {
         this.aiHero = ai;
         this.playerHero = player;

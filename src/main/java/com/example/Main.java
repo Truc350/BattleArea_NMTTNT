@@ -34,7 +34,7 @@ public class Main {
                     player.getHero().useSkill(playerMove, currentTime, ai);
                 }
             } else {
-                System.out.println("[AI] Đang di chuyển lại gần...");
+                System.out.println("Ai Đang di chuyển lại gần");
             }
 
             currentTime += 1000;

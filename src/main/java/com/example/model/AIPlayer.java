@@ -22,14 +22,13 @@ public class AIPlayer extends Hero {
 
     public String chooseBestAction(long currentTime, Hero opponent, Game game) {
         if (!game.isRange()) {
-            System.out.println("ai dang di chuyển lại gần đối thủ...");
+            System.out.println("ai dang di chuyển lại gần đối thủ");
             return "Move Closer";
         }
 
         GameState root = new GameState(deepCopy(this), deepCopy(opponent), currentTime);
         List<GameState> children = generateSuccessors(root, true); // true = AI lượt
         children.sort((a, b) -> Integer.compare(b.damageDealt, a.damageDealt));
-
         int bestScore = Integer.MIN_VALUE;
         String bestMove = "Basic Attack";
 
@@ -61,12 +60,9 @@ public class AIPlayer extends Hero {
 
     // minimax
     private int minimax(boolean maxmin, GameState state, int depth) {
-        // --- Trường hợp cơ sở ---
         if (depth == 0 || state.isTerminal()) {
             return evaluate(state); // Trả về điểm đánh giá
         }
-
-        // --- Lượt MAX (AI muốn điểm cao nhất) ---
         if (maxmin == true) {
             int bestValue = -999999999;
             // Duyệt tất cả trạng thái con hợp lệ
@@ -74,8 +70,9 @@ public class AIPlayer extends Hero {
                 int value = minimax(false, newState, depth - 1);
                 if (value > bestValue) {
                     bestValue = value;
-                    // Ghi lại trạng thái/nước đi tốt nhất nếu cần
-                    // System.out.println("MAX: " + newState.moveName + " = " + value);
+                    // Ghi lại trạng thái/nước đi tốt nhất nếu cần . Để tại chỗ này: node global lưu cái move là gì (đên, attack,...)
+                    // minimax , tạo class trung gian:
+//                     System.out.println("MAX: " + newState.moveName + " = " + value);
                 }
             }
             return bestValue;
@@ -177,11 +174,9 @@ public class AIPlayer extends Hero {
         if (state.aiHero instanceof Mage && state.aiHero.mp >= 25 && state.playerHero.hp <= 40) score += 500;
         if (state.aiHero instanceof Marksman && state.playerHero.hp <= 35) score += 700;
         if (state.aiHero instanceof Support && state.aiHero.hp <= 30) score += 400;
-
         return score;
     }
 
-    // ====================== DEEP COPY (ĐÃ SỬA CHO MARKSMAN) ======================
     private Hero deepCopy(Hero original) {
         Hero copy;
         if (original instanceof Fighter) {
@@ -214,7 +209,7 @@ public class AIPlayer extends Hero {
         return copy;
     }
 
-    // ====================== BẬT/TẮT ALPHA-BETA ======================
+    //
     public void setUseAlphaBeta(boolean use) {
         this.useAlphaBeta = use;
     }
