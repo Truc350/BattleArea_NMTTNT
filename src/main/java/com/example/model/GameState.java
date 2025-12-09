@@ -4,26 +4,24 @@ package com.example.model;
 public class GameState {
     public Hero aiHero;
     public Hero playerHero;
+    private Move move;
     public long time;
-    public String moveName;
-    public int damageDealt;
+
 
     // Constructor dùng cho root
     public GameState(Hero ai, Hero player, long currentTime) {
         this.aiHero = ai;
         this.playerHero = player;
         this.time = currentTime;
-        this.moveName = "";
-        this.damageDealt = 0;
+        this.move = null;
     }
 
     // dùng khi tạo các trạng thái con
-    public GameState(Hero ai, Hero player, long time, String move, int dmg) {
+    public GameState(Hero ai, Hero player, long time, Move move) {
         this.aiHero = ai;
         this.playerHero = player;
         this.time = time;
-        this.moveName = move;
-        this.damageDealt = dmg;
+        this.move = move;
     }
 
     public boolean isTerminal() {
@@ -32,7 +30,25 @@ public class GameState {
 
     @Override
     public String toString() {
-        return String.format("State{AI: %d/%d, Player: %d/%d, Move: %s}",
-                aiHero.hp, aiHero.maxHP, playerHero.hp, playerHero.maxHP, moveName);
+        return String.format("State{AI %d/%d, Player %d/%d, Move: %s}",
+                aiHero.hp, aiHero.maxHP,
+                playerHero.hp, playerHero.maxHP,
+                move == null ? "ROOT" : move.toString());
+    }
+
+    public Hero getAiHero() {
+        return aiHero;
+    }
+
+    public Hero getPlayerHero() {
+        return playerHero;
+    }
+
+    public Move getMove() {
+        return move;
+    }
+
+    public long getTime() {
+        return time;
     }
 }

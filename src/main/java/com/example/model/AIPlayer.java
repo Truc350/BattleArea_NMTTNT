@@ -19,7 +19,6 @@ public class AIPlayer extends Hero {
         skills.add(new Skill("Ultimate Rage", 30, 20, attack * 2, 0, 0));
     }
 
-
     public String chooseBestAction(long currentTime, Hero opponent, Game game) {
         if (!game.isRange()) {
             System.out.println("ai dang di chuyển lại gần đối thủ");
@@ -27,80 +26,65 @@ public class AIPlayer extends Hero {
         }
 
         GameState root = new GameState(deepCopy(this), deepCopy(opponent), currentTime);
-        List<GameState> children = generateSuccessors(root, true); // true = AI lượt
-        children.sort((a, b) -> Integer.compare(b.damageDealt, a.damageDealt));
+        List<GameState> children = generateSuccessors(root, true);
+
         int bestScore = Integer.MIN_VALUE;
-        String bestMove = "Basic Attack";
+        Move bestMove = new Move("Basic Attack", attack, (int) currentTime);
 
         for (GameState child : children) {
             int score;
             if (useAlphaBeta) {
                 score = alphaBeta(child, MAX_DEPTH - 1, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
             } else {
-                score = minimax(false, child, MAX_DEPTH - 1); // false = lượt Player (MIN)
+                score = minimax(false, child, MAX_DEPTH - 1);
             }
 
             if (score > bestScore) {
                 bestScore = score;
-                bestMove = child.moveName;
+                bestMove = child.getMove();
             }
         }
 
-        System.out.println("AI Chọn: " + bestMove +
+        System.out.println("AI Chọn: " + bestMove.name +
                 " (điểm: " + bestScore + ", thuật toán: " +
                 (useAlphaBeta ? "Alpha-Beta" : "Minimax") + ")");
 
-        if (!bestMove.equals("Basic Attack")) {
-            useSkill(bestMove, currentTime, opponent);
+        if (!bestMove.name.equals("Basic Attack")) {
+            useSkill(bestMove.name, currentTime, opponent);
         } else {
             opponent.takeDamage(attack);
         }
-        return bestMove;
+        return bestMove.name;
     }
 
-    // minimax
-    private int minimax(boolean maxmin, GameState state, int depth) {
+    private int minimax(boolean maxPlayer, GameState state, int depth) {
         if (depth == 0 || state.isTerminal()) {
-            return evaluate(state); // Trả về điểm đánh giá
+            return evaluate(state);
         }
-        if (maxmin == true) {
-            int bestValue = -999999999;
-            // Duyệt tất cả trạng thái con hợp lệ
+
+        if (maxPlayer) {
+            int bestValue = Integer.MIN_VALUE;
             for (GameState newState : generateSuccessors(state, true)) {
                 int value = minimax(false, newState, depth - 1);
-                if (value > bestValue) {
-                    bestValue = value;
-                    // Ghi lại trạng thái/nước đi tốt nhất nếu cần . Để tại chỗ này: node global lưu cái move là gì (đên, attack,...)
-                    // minimax , tạo class trung gian:
-//                     System.out.println("MAX: " + newState.moveName + " = " + value);
-                }
+                bestValue = Math.max(bestValue, value);
             }
             return bestValue;
-        }
-        // --- Lượt MIN (Player muốn điểm thấp nhất) ---
-        else {
-            int bestValue = 999999999;
-            // Duyệt tất cả trạng thái con hợp lệ
+        } else {
+            int bestValue = Integer.MAX_VALUE;
             for (GameState newState : generateSuccessors(state, false)) {
                 int value = minimax(true, newState, depth - 1);
-                if (value < bestValue) {
-                    bestValue = value;
-                    // Ghi lại trạng thái/nước đi tốt nhất nếu cần
-                    // System.out.println("MIN: " + newState.moveName + " = " + value);
-                }
+                bestValue = Math.min(bestValue, value);
             }
             return bestValue;
         }
     }
 
-    //alpha beta
     private int alphaBeta(GameState state, int depth, boolean maximizingPlayer, int alpha, int beta) {
         if (depth == 0 || state.isTerminal()) {
             return evaluate(state);
         }
 
         List<GameState> children = generateSuccessors(state, maximizingPlayer);
-        children.sort((a, b) -> Integer.compare(b.damageDealt, a.damageDealt));
 
         if (maximizingPlayer) {
             int maxEval = Integer.MIN_VALUE;
@@ -123,32 +107,41 @@ public class AIPlayer extends Hero {
         }
     }
 
-    // tao trang thai con
     private List<GameState> generateSuccessors(GameState state, boolean maxPlayer) {
         List<GameState> list = new ArrayList<>();
-        Hero current = maxPlayer ? state.aiHero : state.playerHero;
-        Hero enemy = maxPlayer ? state.playerHero : state.aiHero;
 
-        // Basic Attack
-        Hero aiCopy = deepCopy(state.aiHero);
-        Hero playerCopy = deepCopy(state.playerHero);
-        Hero attacker = maxPlayer ? aiCopy : playerCopy;
-        Hero target = maxPlayer ? playerCopy : aiCopy;
+        Hero aiCopy, playerCopy;
+        Hero attacker, target;
+
+        // BASIC ATTACK
+        aiCopy = deepCopy(state.aiHero);
+        playerCopy = deepCopy(state.playerHero);
+
+        attacker = maxPlayer ? aiCopy : playerCopy;
+        target = maxPlayer ? playerCopy : aiCopy;
 
         target.takeDamage(attacker.attack);
-        list.add(new GameState(aiCopy, playerCopy, state.time + 1000, "Basic Attack", attacker.attack));
 
-        // Skills
+        Move move = new Move("Basic Attack", attacker.attack, (int) (state.time + 1000));
+
+        list.add(new GameState(aiCopy, playerCopy, state.time + 1000, move));
+
+        // SKILLS
+        Hero current = maxPlayer ? state.aiHero : state.playerHero;
+
         for (Skill skill : current.skills) {
             if (skill.canUse(state.time, current.mp)) {
+
                 aiCopy = deepCopy(state.aiHero);
                 playerCopy = deepCopy(state.playerHero);
+
                 attacker = maxPlayer ? aiCopy : playerCopy;
                 target = maxPlayer ? playerCopy : aiCopy;
 
                 if (attacker.useSkill(skill.getName(), state.time, target)) {
-                    list.add(new GameState(aiCopy, playerCopy, state.time + 1000,
-                            skill.getName(), skill.getDamage()));
+                    Move mv = new Move(skill.getName(), skill.getDamage(), (int) (state.time + 1000));
+
+                    list.add(new GameState(aiCopy, playerCopy, state.time + 1000, mv));
                 }
             }
         }
@@ -169,16 +162,17 @@ public class AIPlayer extends Hero {
         if (state.playerHero.hp <= 12) score += 800;
         if (state.aiHero.hp <= 20) score -= 600;
 
-        // Bonus theo class
         if (state.aiHero instanceof Fighter && state.aiHero.mp >= 22) score += 300;
         if (state.aiHero instanceof Mage && state.aiHero.mp >= 25 && state.playerHero.hp <= 40) score += 500;
         if (state.aiHero instanceof Marksman && state.playerHero.hp <= 35) score += 700;
         if (state.aiHero instanceof Support && state.aiHero.hp <= 30) score += 400;
+
         return score;
     }
 
     private Hero deepCopy(Hero original) {
         Hero copy;
+
         if (original instanceof Fighter) {
             copy = new Fighter(original.name, original.maxHP, original.maxMP,
                     original.position, original.attack, original.defense);
@@ -199,18 +193,24 @@ public class AIPlayer extends Hero {
 
         copy.hp = original.hp;
         copy.mp = original.mp;
+
         copy.skills = new ArrayList<>();
         for (Skill s : original.skills) {
-            Skill ns = new Skill(s.getName(), s.getMpCost(), s.getCooldown(),
+            Skill newSkill = new Skill(s.getName(), s.getMpCost(), s.getCooldown(),
                     s.getDamage(), s.getHealHP(), s.getHealMP());
-            ns.setLastUsedTime(s.getLastUsedTime());
-            copy.skills.add(ns);
+            newSkill.setLastUsedTime(s.getLastUsedTime());
+            copy.skills.add(newSkill);
         }
+
         return copy;
     }
 
-    //
     public void setUseAlphaBeta(boolean use) {
         this.useAlphaBeta = use;
     }
+    // Hàm test cho phép gọi từ bên ngoài
+    public List<GameState> generateSuccessorsForTest(GameState s, boolean max) {
+        return generateSuccessors(s, max);
+    }
+
 }

@@ -5,6 +5,9 @@ public class Game {
     private AIPlayer aiPlayer;
     private double distance;
 
+    public Game() {
+    }
+
     public Game(Player player, AIPlayer aiPlayer) {
         this.player = player;
         this.aiPlayer = aiPlayer;
