@@ -7,6 +7,13 @@ import javafx.scene.layout.Pane;
 public class ArenaView extends Pane{
     private ImageView player, enemy;
     private HealthBar playerBar, enemyBar;
+
+    public enum Turn {
+        PLAYER, AI
+    }
+    private Turn currentTurn = Turn.PLAYER;
+    private boolean gameOver = false;
+
     public ArenaView(){
         setPrefSize(1300, 700);
 
@@ -67,4 +74,28 @@ public class ArenaView extends Pane{
     public HealthBar getPlayerBar() { return playerBar; }
     public HealthBar getEnemyBar() { return enemyBar; }
 
+
+    public boolean isPlayerTurn() {
+        return currentTurn == Turn.PLAYER;
+    }
+
+    public void endPlayerTurn() {
+        currentTurn = Turn.AI;
+    }
+
+    public void endAITurn() {
+        currentTurn = Turn.PLAYER;
+    }
+
+    public void startPlayerTurn() {
+        currentTurn = Turn.PLAYER;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public void setGameOver(boolean value) {
+        gameOver = value;
+    }
 }
