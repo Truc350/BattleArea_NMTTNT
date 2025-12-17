@@ -5,20 +5,22 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 
 public class SkillEffect {
-    public static void castSkill(ArenaView arena, double startX, double startY, String imagePath, int damage, int mpCost, String explosionPath, int explosionSize) {
+    public static void castSkill(ArenaView arena, double startX, double startY, String imagePath, int damage, int mpCost, String explosionPath, int explosionSize, Runnable onHit) {
 
         ImageView player = arena.getPlayerView();
         HealthBar enemyBar = arena.getEnemyBar();
         HealthBar playerBar = arena.getPlayerBar();
 
         // Không đủ MP → không đánh
-        if (playerBar.getMp() < mpCost) {
+        if (playerBar.getCurrentMp() < mpCost) {
             System.out.println("Không đủ MP để tung chiêu!");
             return;
         }
@@ -64,7 +66,7 @@ public class SkillEffect {
 
                     // trừ máu của enemy
                     enemyBar.takeDamage(damage, 0);
-
+                    if (onHit != null) onHit.run(); // <<< QUAN TRỌNG
                     return;
                 }
             }
@@ -103,4 +105,61 @@ public class SkillEffect {
         });
         pause.play();
     }
+
+    public static void castSkillAI(
+            ArenaView arena,
+            double startX, double startY,
+            String imagePath,
+            int damage,
+            String explosionPath,
+            int explosionSize, Runnable onHit
+    ) {
+        ImageView skill = new ImageView(
+                new Image(SkillEffect.class.getResourceAsStream(imagePath))
+        );
+
+        skill.setFitWidth(100);
+        skill.setFitHeight(100);
+        skill.setLayoutX(startX);
+        skill.setLayoutY(startY);
+
+        arena.getChildren().add(skill);
+
+        TranslateTransition tt = new TranslateTransition(Duration.seconds(1), skill);
+        tt.setByX(+900); // AI bay từ trái sang phải
+
+        tt.setOnFinished(e -> {
+            arena.getChildren().remove(skill);
+
+            showExplosion(
+                    arena,
+                    arena.getPlayerView().getLayoutX() + 50,
+                    arena.getPlayerView().getLayoutY() + 60,
+                    explosionPath,
+                    explosionSize
+            );
+
+            arena.getPlayerBar().takeDamage(damage, 0);
+
+            if (onHit != null) onHit.run();
+
+        });
+
+        tt.play();
+    }
+
+    private static Node createGameOverLabel(String gameOver) {
+        Label label = new Label(gameOver);
+        label.setStyle("""
+        -fx-font-size: 48px;
+        -fx-text-fill: red;
+        -fx-font-weight: bold;
+    """);
+
+        label.setLayoutX(500);
+        label.setLayoutY(300);
+        return label;
+    }
+
+
 }

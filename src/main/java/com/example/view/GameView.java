@@ -1,6 +1,7 @@
 package com.example.view;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -19,6 +20,7 @@ public class GameView extends Application {
         Pane root = new Pane();
         root.getChildren().addAll(arena, skillBar);
 
+        Platform.runLater(() -> arena.requestFocus());
         primaryStage.setScene(new Scene(root, 1300, 700));
         primaryStage.setResizable(false);
         primaryStage.setTitle("Battle Arena 2D");

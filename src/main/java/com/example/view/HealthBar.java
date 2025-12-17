@@ -78,14 +78,13 @@ public class HealthBar extends Pane {
     }
 
     // HP
-    public int getHp() {
+    public int getCurrentHp() {
         return currentHp;
     }
 
     public void setHp(int hp) {
         currentHp = Math.max(0, Math.min(hp, maxHp));
         double percent = (double) currentHp / maxHp;
-//        updateHpBar();
         hpBar.setWidth(hpWidth * percent);
         hpText.setText(currentHp + "");
     }
@@ -96,13 +95,12 @@ public class HealthBar extends Pane {
     }
 
     // --- MP ---
-    public int getMp() {
+    public int getCurrentMp() {
         return currentMp;
     }
 
     public void setMp(int mp) {
         currentMp = Math.max(0, Math.min(mp, maxMp));
-//        updateMpBar();
 
         double percent = (double) currentMp / maxMp;
 
@@ -117,7 +115,7 @@ public class HealthBar extends Pane {
 
     public void takeDamage(int hpDmg, int mpDmg) {
         setHp(currentHp - hpDmg);
-        setMp(currentHp - mpDmg);
+        setMp(currentMp - mpDmg);
     }
 
     // --- MP ---
@@ -128,5 +126,9 @@ public class HealthBar extends Pane {
     public void setMaxHp(int maxHp) {
         this.maxHp = maxHp;
         setHp(currentHp); // cập nhật lại thanh
+    }
+
+    public void heal(int amount) {
+        setHp(currentHp + amount);
     }
 }

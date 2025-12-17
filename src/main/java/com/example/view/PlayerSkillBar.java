@@ -2,24 +2,31 @@ package com.example.view;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
-import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.ArcType;
 import javafx.util.Duration;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.awt.SystemColor.text;
 
 public class PlayerSkillBar extends Pane {
 
     private ArenaView arena;
 
     SkillButton A1, A2, A3, DEF, HEAL, ATK;
+    private int turnCount = 0;
+    private Map<SkillButton, Integer> skillCooldownEnd = new HashMap<>();
 
     public PlayerSkillBar(ArenaView arena) {
         this.arena = arena;
@@ -30,7 +37,6 @@ public class PlayerSkillBar extends Pane {
         A1 = new SkillButton(createCircleButton("A1", "#3498db"));
         A2 = new SkillButton(createCircleButton("A2", "#f1c40f"));
         A3 = new SkillButton(createCircleButton("A3", "#e67e22"));
-
         DEF = new SkillButton(createRectButton("Defend", "#9b59b6"));
         HEAL = new SkillButton(createRectButton("Heal", "#1abc9c"));
 
@@ -59,21 +65,48 @@ public class PlayerSkillBar extends Pane {
         // GÁN SKILL ACTION + COOLDOWN
         // ==============================
         A1.getButton().setOnAction(e -> {
-            castA1();
-            startCooldown(A1.getOverlay(), 5);  // cooldown 5s
+            if (!arena.isPlayerTurn()) return;
+
+            if (isSkillReady(A1)) {
+                castA1();
+                startSkillCooldown(A1, 2); // A1 cần 2 lượt
+            }
         });
 
         A2.getButton().setOnAction(e -> {
-            castA2();
-            startCooldown(A2.getOverlay(), 8);  // cooldown 8s
+            if (!arena.isPlayerTurn()) return;
+
+            if (isSkillReady(A2)) {
+                castA2();
+                startSkillCooldown(A2, 3); // 3 lượt
+            }
         });
 
         A3.getButton().setOnAction(e -> {
-            castA3();
-            startCooldown(A3.getOverlay(), 10); // cooldown 10s
+            if (!arena.isPlayerTurn()) return;
+
+            if (isSkillReady(A3)) {
+                castA3();
+                startSkillCooldown(A3, 5); // 5 lượt
+            }
+        });
+
+        HEAL.getButton().setOnAction(e -> {
+            if (isSkillReady(HEAL)) {
+                castHeal();
+                startSkillCooldown(HEAL, 4); // 4 lượt
+            }
+        });
+
+        DEF.getButton().setOnAction(e -> {
+            if (arena.getPlayerBar().getCurrentHp() <= 50) {
+                castDefend();
+                DEF.setDisable(true);
+            }
         });
 
         ATK.getButton().setOnAction(e -> {
+            if (!arena.isPlayerTurn()) return;
             castAttack();
         });
     }
@@ -87,7 +120,8 @@ public class PlayerSkillBar extends Pane {
                 arena.getPlayerView().getLayoutX() - 20,
                 arena.getPlayerView().getLayoutY() + 60,
                 "/img/attackEffect/chieu2.png", 10, 5,
-                "/img/explosion/explosion_thuong.png", 120
+                "/img/explosion/explosion_thuong.png", 120,
+                () -> afterPlayerAttack()
         );
     }
 
@@ -98,7 +132,8 @@ public class PlayerSkillBar extends Pane {
                 arena.getPlayerView().getLayoutY() + 60,
                 "/img/attackEffect/chieu4.png",
                 20, 10,
-                "/img/explosion/explosion_1.png", 150
+                "/img/explosion/explosion_1.png", 150,
+                () -> afterPlayerAttack()
         );
     }
 
@@ -109,7 +144,8 @@ public class PlayerSkillBar extends Pane {
                 arena.getPlayerView().getLayoutY() + 60,
                 "/img/attackEffect/chieu4.png",
                 30, 15,
-                "/img/explosion/explosion_2.png", 180
+                "/img/explosion/explosion_2.png", 180,
+                () -> afterPlayerAttack()
         );
     }
 
@@ -120,46 +156,70 @@ public class PlayerSkillBar extends Pane {
                 arena.getPlayerView().getLayoutY() + 60,
                 "/img/attackEffect/chieu4.png",
                 35, 25,
-                "/img/explosion/explosion_3.png", 220
+                "/img/explosion/explosion_3.png", 220,
+                () -> afterPlayerAttack()
         );
     }
 
-    // ============================================================
-    // COOLDOWN OVERLAY
-    // ============================================================
-    private void startCooldown(Canvas overlay, double seconds) {
-        StackPane wrapper = (StackPane) overlay.getParent();
-        wrapper.setDisable(true);   // KHÓA nút khi cooldown bắt đầu
-
-        long start = System.currentTimeMillis();
-
-        Timeline tl = new Timeline(new KeyFrame(Duration.millis(16), e -> {
-            double elapsed = (System.currentTimeMillis() - start) / 1000.0;
-            double p = Math.max(0, 1 - elapsed / seconds);
-            drawCooldown(overlay, p);
-        }));
-
-        tl.setCycleCount(Animation.INDEFINITE);
-        tl.play();
-
-        Timeline stopTl = new Timeline(new KeyFrame(Duration.seconds(seconds), e -> {
-            tl.stop();
-            drawCooldown(overlay, 0);
-
-            wrapper.setDisable(false); // MỞ KHÓA khi cooldown xong
-        }));
-        stopTl.play();
+    private void castHeal() {
+        arena.getPlayerBar().heal(30);
     }
 
-    private void drawCooldown(Canvas c, double percent) {
+    private void castDefend() {
+        // tuỳ bạn implement
+    }
+
+    // ============================================================
+    // COOLDOWN THEO LƯỢT
+    // ============================================================
+    private boolean isSkillReady(SkillButton skill) {
+        return !skillCooldownEnd.containsKey(skill)
+                || turnCount >= skillCooldownEnd.get(skill);
+    }
+
+    private void startSkillCooldown(SkillButton skill, int waitTurns) {
+        skillCooldownEnd.put(skill, turnCount + waitTurns);
+        skill.setDisable(true);
+
+        // overlay mờ
+        drawOverlay(skill.getOverlay(), true);
+    }
+
+    // ============================================================
+    // GỌI SAU MỖI LƯỢT
+    // ============================================================
+    public void nextTurn() {
+        turnCount++;
+
+        for (var entry : skillCooldownEnd.entrySet()) {
+            SkillButton btn = entry.getKey();
+            int readyTurn = entry.getValue();
+
+            if (turnCount >= readyTurn) {
+                btn.setDisable(false);
+                drawOverlay(btn.getOverlay(), false);
+            }
+        }
+
+        // DEF chỉ dùng được khi máu thấp
+        if (arena.getPlayerBar().getCurrentHp() <= 50) {
+            DEF.setDisable(false);
+        } else {
+            DEF.setDisable(true);
+        }
+    }
+
+    // ============================================================
+    // VẼ / TẮT OVERLAY
+    // ============================================================
+    private void drawOverlay(Canvas c, boolean active) {
         GraphicsContext g = c.getGraphicsContext2D();
         g.clearRect(0, 0, c.getWidth(), c.getHeight());
 
-        if (percent <= 0) return;
-
-        g.setFill(Color.rgb(0, 0, 0, 0.5));
-        g.fillArc(0, 0, c.getWidth(), c.getHeight(),
-                90, -360 * percent, ArcType.ROUND);
+        if (active) {
+            g.setFill(Color.rgb(0, 0, 0, 0.6));
+            g.fillRect(0, 0, c.getWidth(), c.getHeight());
+        }
     }
 
     // ============================================================
@@ -168,14 +228,121 @@ public class PlayerSkillBar extends Pane {
     private Button createRectButton(String text, String color) {
         Button btn = new Button(text);
         btn.setPrefSize(65, 35);
-        btn.setStyle("-fx-background-radius: 10; -fx-background-color:" + color + "; -fx-font-size:13px; -fx-text-fill:white;");
+        btn.setStyle("-fx-background-radius: 10; -fx-background-color:" + color
+                + "; -fx-font-size:13px; -fx-text-fill:white;");
         return btn;
     }
 
     private Button createCircleButton(String text, String color) {
         Button btn = new Button(text);
         btn.setPrefSize(35, 35);
-        btn.setStyle("-fx-background-radius: 25; -fx-background-color:" + color + "; -fx-font-size:13px; -fx-text-fill:white;");
+        btn.setStyle("-fx-background-radius: 25; -fx-background-color:" + color
+                + "; -fx-font-size:13px; -fx-text-fill:white;");
         return btn;
     }
+
+    private void aiAttack() {
+        if (arena.isGameOver()) return;
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(0.8));
+        delay.setOnFinished(e -> {
+            if (arena.isGameOver()) return;
+
+            HealthBar aiBar = arena.getEnemyBar();
+
+            // AI hết MP → đánh thường
+            int mp = aiBar.getCurrentMp();
+
+            int damage;
+            int mpCost;
+            String effect;
+            String explosion;
+            int explosionSize;
+
+            // RANDOM SKILL
+            if (mp >= 25 && Math.random() < 0.2) {
+                // A3
+                damage = 35;
+                mpCost = 25;
+                effect = "/img/attackEffect/chieu4.png";
+                explosion = "/img/explosion/explosion_3.png";
+                explosionSize = 220;
+            } else if (mp >= 15 && Math.random() < 0.4) {
+                // A2
+                damage = 25;
+                mpCost = 15;
+                effect = "/img/attackEffect/chieu4.png";
+                explosion = "/img/explosion/explosion_2.png";
+                explosionSize = 180;
+            } else if (mp >= 10 && Math.random() < 0.6) {
+                // A1
+                damage = 18;
+                mpCost = 10;
+                effect = "/img/attackEffect/chieu4.png";
+                explosion = "/img/explosion/explosion_1.png";
+                explosionSize = 150;
+            } else {
+                // Attack thường
+                damage = 12;
+                mpCost = 5;
+                effect = "/img/attackEffect/chieu2.png";
+                explosion = "/img/explosion/explosion_thuong.png";
+                explosionSize = 120;
+            }
+
+            // TRỪ MP AI
+            aiBar.takeDamage(0, mpCost);
+
+            SkillEffect.castSkillAI(
+                    arena,
+                    arena.getEnemyView().getLayoutX() + 200,
+                    arena.getEnemyView().getLayoutY() + 60,
+                    effect,
+                    damage,
+                    explosion,
+                    explosionSize,
+                    () -> {
+
+                        if (arena.getPlayerBar().getCurrentHp() <= 0) {
+                            arena.setGameOver(true);
+                            showGameOver("GAME OVER");
+                            return;
+                        }
+
+                        // player còn sống → trả lượt
+                        arena.startPlayerTurn();
+                        nextTurn();
+                    }
+            );
+        });
+        delay.play();
+    }
+
+    private void showGameOver(String text) {
+        Label label = new Label(text);
+        label.setStyle("""
+        -fx-font-size: 48px;
+        -fx-text-fill: red;
+        -fx-font-weight: bold;
+    """);
+
+        label.setLayoutX(500);
+        label.setLayoutY(300);
+
+        arena.getChildren().add(label);
+    }
+
+    private void afterPlayerAttack() {
+        // AI chết ngay sau đòn đánh của player
+        if (arena.getEnemyBar().getCurrentHp() <= 0) {
+            arena.setGameOver(true);
+            showGameOver("YOU WIN!");
+            return;
+        }
+
+        // AI còn sống → mới được đánh
+        arena.endPlayerTurn();
+        aiAttack();
+    }
+
 }
