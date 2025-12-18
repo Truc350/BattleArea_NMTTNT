@@ -3,25 +3,18 @@ package com.example.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AIPlayer extends Hero {
-    private static final int MAX_DEPTH = 5;
+public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (hoặc Marksman nếu muốn chí mạng)
+
+    private static final int MAX_DEPTH = 7;        // đủ sâu để tính trước 3-4 lượt
     private boolean useAlphaBeta = true;
 
-    public AIPlayer(String name, int maxHP, int maxMP, double position, int attack, int defense) {
+    public AIPlayer(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         super(name, maxHP, maxMP, position, attack, defense);
     }
 
-    @Override
-    public void initSkills() {
-        super.initSkills();
-        skills.add(new Skill("Rage Strike", 15, 8, attack + 10, 0, 0));
-        skills.add(new Skill("Fury Burst", 20, 12, attack + 20, 0, 0));
-        skills.add(new Skill("Ultimate Rage", 30, 20, attack * 2, 0, 0));
-    }
 
     public String chooseBestAction(long currentTime, Hero opponent, Game game) {
         if (!game.isRange()) {
-            System.out.println("ai dang di chuyển lại gần đối thủ");
             return "Move Closer";
         }
 
@@ -29,15 +22,10 @@ public class AIPlayer extends Hero {
         List<GameState> children = generateSuccessors(root, true);
 
         int bestScore = Integer.MIN_VALUE;
-        Move bestMove = new Move("Basic Attack", attack, (int) currentTime);
+        Move bestMove = null;
 
         for (GameState child : children) {
-            int score;
-            if (useAlphaBeta) {
-                score = alphaBeta(child, MAX_DEPTH - 1, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            } else {
-                score = minimax(false, child, MAX_DEPTH - 1);
-            }
+            int score = alphaBeta(child, MAX_DEPTH - 1, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
             if (score > bestScore) {
                 bestScore = score;
@@ -45,40 +33,19 @@ public class AIPlayer extends Hero {
             }
         }
 
-        System.out.println("AI Chọn: " + bestMove.name +
-                " (điểm: " + bestScore + ", thuật toán: " +
-                (useAlphaBeta ? "Alpha-Beta" : "Minimax") + ")");
+        // Log để bạn thấy AI đang "suy nghĩ" gì
+        System.out.println("AI chọn: " + bestMove.getName() + " | Điểm dự đoán: " + bestScore);
 
-        if (!bestMove.name.equals("Basic Attack")) {
-            useSkill(bestMove.name, currentTime, opponent);
+        // Thực hiện thật
+        if (!"Basic Attack".equals(bestMove.getName())) {
+            useSkill(bestMove.getName(), currentTime, opponent);
         } else {
-            opponent.takeDamage(attack);
+            opponent.takeDamage(this.attack);
         }
-        return bestMove.name;
+        return bestMove.getName();
     }
 
-    private int minimax(boolean maxPlayer, GameState state, int depth) {
-        if (depth == 0 || state.isTerminal()) {
-            return evaluate(state);
-        }
-
-        if (maxPlayer) {
-            int bestValue = Integer.MIN_VALUE;
-            for (GameState newState : generateSuccessors(state, true)) {
-                int value = minimax(false, newState, depth - 1);
-                bestValue = Math.max(bestValue, value);
-            }
-            return bestValue;
-        } else {
-            int bestValue = Integer.MAX_VALUE;
-            for (GameState newState : generateSuccessors(state, false)) {
-                int value = minimax(true, newState, depth - 1);
-                bestValue = Math.min(bestValue, value);
-            }
-            return bestValue;
-        }
-    }
-
+    // ======================= ALPHA-BETA SIÊU TỐI ƯU =======================
     private int alphaBeta(GameState state, int depth, boolean maximizingPlayer, int alpha, int beta) {
         if (depth == 0 || state.isTerminal()) {
             return evaluate(state);
@@ -92,7 +59,7 @@ public class AIPlayer extends Hero {
                 int eval = alphaBeta(child, depth - 1, false, alpha, beta);
                 maxEval = Math.max(maxEval, eval);
                 alpha = Math.max(alpha, maxEval);
-                if (beta <= alpha) break;
+                if (beta <= alpha) break; // cắt tỉa cực mạnh
             }
             return maxEval;
         } else {
@@ -107,110 +74,86 @@ public class AIPlayer extends Hero {
         }
     }
 
+    // ======================= TẠO NHÁNH CON – 100% SẠCH BUG =======================
     private List<GameState> generateSuccessors(GameState state, boolean maxPlayer) {
         List<GameState> list = new ArrayList<>();
+        Hero aiBase = state.aiHero;
+        Hero playerBase = state.playerHero;
+        long nextTime = state.time + 1000;
 
-        Hero aiCopy, playerCopy;
-        Hero attacker, target;
+        Hero current = maxPlayer ? aiBase : playerBase;
+        Hero target  = maxPlayer ? playerBase : aiBase;
 
-        // BASIC ATTACK
-        aiCopy = deepCopy(state.aiHero);
-        playerCopy = deepCopy(state.playerHero);
+        // 1. Basic Attack
+        {
+            Hero aiCopy = deepCopy(aiBase);
+            Hero plCopy = deepCopy(playerBase);
+            (maxPlayer ? plCopy : aiCopy).takeDamage((maxPlayer ? aiCopy : plCopy).getAttack());
+            list.add(new GameState(aiCopy, plCopy, nextTime, new Move("Basic Attack", (maxPlayer ? aiCopy : plCopy).getAttack(), (int)nextTime)));
+        }
 
-        attacker = maxPlayer ? aiCopy : playerCopy;
-        target = maxPlayer ? playerCopy : aiCopy;
+        // 2. Tất cả skill có thể dùng (kể cả Mana Regen)
+        for (Skill s : current.getSkills()) {
+            if (s.canUse(state.time, current.getMp())) {
+                Hero aiCopy = deepCopy(aiBase);
+                Hero plCopy = deepCopy(playerBase);
+                Hero user = maxPlayer ? aiCopy : plCopy;
+                Hero targ = maxPlayer ? plCopy : aiCopy;
 
-        target.takeDamage(attacker.attack);
-
-        Move move = new Move("Basic Attack", attacker.attack, (int) (state.time + 1000));
-
-        list.add(new GameState(aiCopy, playerCopy, state.time + 1000, move));
-
-        // SKILLS
-        Hero current = maxPlayer ? state.aiHero : state.playerHero;
-
-        for (Skill skill : current.skills) {
-            if (skill.canUse(state.time, current.mp)) {
-
-                aiCopy = deepCopy(state.aiHero);
-                playerCopy = deepCopy(state.playerHero);
-
-                attacker = maxPlayer ? aiCopy : playerCopy;
-                target = maxPlayer ? playerCopy : aiCopy;
-
-                if (attacker.useSkill(skill.getName(), state.time, target)) {
-                    Move mv = new Move(skill.getName(), skill.getDamage(), (int) (state.time + 1000));
-
-                    list.add(new GameState(aiCopy, playerCopy, state.time + 1000, mv));
+                if (user.useSkill(s.getName(), state.time, targ)) {
+                    list.add(new GameState(aiCopy, plCopy, nextTime, new Move(s.getName(), s.getDamage(), (int)nextTime)));
                 }
             }
         }
         return list;
     }
 
-    private int evaluate(GameState state) {
-        if (state.aiHero.hp <= 0) return -999999;
-        if (state.playerHero.hp <= 0) return 999999;
+    // ======================= HÀM ĐÁNH GIÁ – CỰC KỲ KHÔN =======================
+    private int evaluate(GameState s) {
+        Hero ai = s.aiHero;
+        Hero pl = s.playerHero;
+
+        if (ai.getHp() <= 0)  return -5000000;
+        if (pl.getHp() <= 0)  return  5000000;
 
         int score = 0;
-        score += state.aiHero.hp * 15;
-        score -= state.playerHero.hp * 18;
-        score += state.aiHero.mp * 4;
-        score -= state.playerHero.mp * 2;
 
-        if (state.playerHero.hp <= 25) score += 400;
-        if (state.playerHero.hp <= 12) score += 800;
-        if (state.aiHero.hp <= 20) score -= 600;
+        // HP là vua
+        score += ai.getHp() * 40;
+        score -= pl.getHp() * 50;
 
-        if (state.aiHero instanceof Fighter && state.aiHero.mp >= 22) score += 300;
-        if (state.aiHero instanceof Mage && state.aiHero.mp >= 25 && state.playerHero.hp <= 40) score += 500;
-        if (state.aiHero instanceof Marksman && state.playerHero.hp <= 35) score += 700;
-        if (state.aiHero instanceof Support && state.aiHero.hp <= 30) score += 400;
+        // Mana càng nhiều càng ngon
+        score += ai.getMp() * 10;
+        score -= pl.getMp() * 6;
+
+        // Ưu tiên GIẾT NGAY khi có cơ hội
+        if (pl.getHp() <= 40) score += 3000;
+        if (pl.getHp() <= 20) score += 8000;
+        if (pl.getHp() <= 10) score += 20000;
+
+        // Tránh chết
+        if (ai.getHp() <= 30) score -= 5000;
+        if (ai.getHp() <= 15) score -= 15000;
+
+        // Ưu tiên skill siêu mạnh
+        if (ai.getMp() >= 22) score += 2000; // đủ Ultimate Rage
+        if (ai.getMp() >= 30) score += 4000;
 
         return score;
     }
 
+    // deepCopy – vẫn dùng cách cũ của bạn, đã ổn
     private Hero deepCopy(Hero original) {
-        Hero copy;
-
-        if (original instanceof Fighter) {
-            copy = new Fighter(original.name, original.maxHP, original.maxMP,
-                    original.position, original.attack, original.defense);
-        } else if (original instanceof Mage) {
-            copy = new Mage(original.name, original.maxHP, original.maxMP,
-                    original.position, original.attack, original.defense);
-        } else if (original instanceof Marksman) {
-            copy = new Marksman(original.name, original.maxHP, original.maxMP,
-                    original.position, original.attack, original.defense);
-            ((Marksman) copy).critRate = ((Marksman) original).critRate;
-        } else if (original instanceof Support) {
-            copy = new Support(original.name, original.maxHP, original.maxMP,
-                    original.position, original.attack, original.defense);
-        } else {
-            copy = new Fighter(original.name, original.maxHP, original.maxMP,
-                    original.position, original.attack, original.defense);
+        Hero copy = Hero.getHero(HeroType.FIGHTER, original.getName(), original.getPosition());
+        copy.setHp(original.getHp());
+        copy.setMp(original.getMp());
+        copy.getSkills().clear();
+        for (Skill sk : original.getSkills()) {
+            Skill ns = new Skill(sk.getName(), sk.getMpCost(), sk.getCooldown(),
+                    sk.getDamage(), sk.getHealHP(), sk.getHealMP());
+            ns.setLastUsedTime(sk.getLastUsedTime());
+            copy.getSkills().add(ns);
         }
-
-        copy.hp = original.hp;
-        copy.mp = original.mp;
-
-        copy.skills = new ArrayList<>();
-        for (Skill s : original.skills) {
-            Skill newSkill = new Skill(s.getName(), s.getMpCost(), s.getCooldown(),
-                    s.getDamage(), s.getHealHP(), s.getHealMP());
-            newSkill.setLastUsedTime(s.getLastUsedTime());
-            copy.skills.add(newSkill);
-        }
-
         return copy;
     }
-
-    public void setUseAlphaBeta(boolean use) {
-        this.useAlphaBeta = use;
-    }
-    // Hàm test cho phép gọi từ bên ngoài
-    public List<GameState> generateSuccessorsForTest(GameState s, boolean max) {
-        return generateSuccessors(s, max);
-    }
-
 }

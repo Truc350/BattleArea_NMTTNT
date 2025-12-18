@@ -2,7 +2,8 @@ package com.example.model;
 
 public class Fighter extends  Hero {
 
-    public Fighter(String name, int maxHP, int maxMP, double position, int attack, int defense) {
+
+    public Fighter(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         super(name, maxHP, maxMP, position, attack, defense);
     }
 

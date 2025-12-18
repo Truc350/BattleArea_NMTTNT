@@ -18,7 +18,7 @@ public class Player {
 
     }
 
-    public void selectPlayerHero(double position) {
+    public void selectPlayerHero(Point position) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("\n=== CHỌN TƯỚNG CHO NGƯỜI CHƠI ===");
         System.out.println("1. Fighter (Chiến binh - Attack 20, Defense 15)");

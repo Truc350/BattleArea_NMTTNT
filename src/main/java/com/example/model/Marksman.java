@@ -5,9 +5,10 @@ import java.util.Random;
 public class Marksman extends Hero {
     float critRate = 0.3f;// tỉ lệ chí mạng
 
-    public Marksman(String name, int maxHP, int maxMP, double position, int attack, int defense) {
+    public Marksman(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         super(name, maxHP, maxMP, position, attack, defense);
     }
+
 
     @Override
     public void initSkills() {

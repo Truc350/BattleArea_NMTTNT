@@ -7,12 +7,12 @@ public abstract class Hero {
     protected String name;
     protected int hp, maxHP;
     protected int mp, maxMP;
-    protected double position;
+    protected Point position;
     protected int attack;
     protected int defense;
     protected List<Skill> skills = new ArrayList<Skill>();
 
-    public Hero(String name, int maxHP, int maxMP, double position, int attack, int defense) {
+    public Hero(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         this.name = name;
         this.maxHP = Math.min(100, maxHP); // Giới hạn maxHP là 100
         this.hp = Math.min(100, maxHP);    // Ban đầu hp = maxHP, giới hạn 100
@@ -86,11 +86,11 @@ public abstract class Hero {
         this.maxMP = maxMP;
     }
 
-    public double getPosition() {
+    public Point getPosition() {
         return position;
     }
 
-    public void setPosition(double position) {
+    public void setPosition(Point position) {
         this.position = position;
     }
 
@@ -120,7 +120,7 @@ public abstract class Hero {
 
 
     // tạo hero theo loại
-    public static Hero getHero(HeroType type, String name, double position) {
+    public static Hero getHero(HeroType type, String name, Point position) {
         int maxHP = 100;
         int maxMP = 100;
         int attack = 15;
@@ -129,20 +129,20 @@ public abstract class Hero {
         // Stats khác nhau theo loại
         switch (type) {
             case FIGHTER:// Tanky, damage cao
-                attack = 16;
-                defense = 14;
+                attack = 8;
+                defense = 10;
                 break;
             case MARKSMAN:// Damage cực cao, yếu thủ
-                attack = 20;
-                defense = 7;
+                attack = 10;
+                defense = 5;
                 break;
             case MAGE:// Phép mạnh, MP đầy
-                attack = 14;
+                attack = 5;
                 maxMP = 100;
                 break;
             case SUPPORT:// Heal tốt, sống dai
-                attack = 7;
-                defense = 13;
+                attack = 5;
+                defense = 15;
                 break;
         }
         Hero hero;
@@ -165,4 +165,7 @@ public abstract class Hero {
         return hero;
     }
 
+    public double distanceTo(AIPlayer aiPlayer) {
+        return this.position.distanceTo(aiPlayer.getPosition());
+    }
 }

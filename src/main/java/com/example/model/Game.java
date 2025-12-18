@@ -4,6 +4,7 @@ public class Game {
     private Player player;
     private AIPlayer aiPlayer;
     private double distance;
+    private static final double ATTACK_RANGE = 2.5; // ví dụ 2.5 đơn vị
 
     public Game() {
     }
@@ -11,7 +12,7 @@ public class Game {
     public Game(Player player, AIPlayer aiPlayer) {
         this.player = player;
         this.aiPlayer = aiPlayer;
-        this.distance = Math.abs(player.getHero().getPosition() - aiPlayer.getPosition());
+        this.distance = player.getHero().getPosition().distanceTo(aiPlayer.getPosition());
     }
 
     public void start() {
@@ -19,7 +20,7 @@ public class Game {
     }
 
     public boolean isRange() {
-        return distance <= 1;
+        return player.getHero().distanceTo(aiPlayer) <= ATTACK_RANGE;
     }
 
     public Player getPlayer() {
