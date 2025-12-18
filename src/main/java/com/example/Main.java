@@ -4,13 +4,14 @@ package com.example;
 import com.example.model.AIPlayer;
 import com.example.model.Game;
 import com.example.model.Player;
+import com.example.model.Point;
 
 public class Main {
     public static void main(String[] args) {
         Player player = new Player(null);
-        player.selectPlayerHero(0.0); // Người chơi chọn tướng
+        player.selectPlayerHero(new Point(0,0)); // Người chơi chọn tướng
 
-        AIPlayer ai = new AIPlayer("AI GOD", 100, 100, 1.0, 22, 12);
+        AIPlayer ai = new AIPlayer("AI GOD", 100, 100, new Point(10,9), 22, 12);
         Game game = new Game(player, ai);
         game.start();
 
