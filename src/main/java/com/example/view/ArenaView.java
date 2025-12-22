@@ -3,8 +3,18 @@ package com.example.view;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+import java.util.List;
+import java.util.Random;
 
 public class ArenaView extends Pane{
+
+    private static final List<String> ENEMY_LIST = List.of(
+            "/img/character/dausi_trai.png",
+            "/img/character/phap_su_trai.png",
+            "/img/character/xathu.png",
+            "/img/character/trothu_trai.png"
+    );
+
     private ImageView player, enemy;
     private HealthBar playerBar, enemyBar;
 
@@ -14,26 +24,27 @@ public class ArenaView extends Pane{
     private Turn currentTurn = Turn.PLAYER;
     private boolean gameOver = false;
 
-    public ArenaView(){
+    public ArenaView(String arenaPath, String playerPath){
         setPrefSize(1300, 700);
 
-        ImageView bg = new ImageView(new Image(getClass().getResourceAsStream("/img/arena/sandau1.jpg")));
+        ImageView bg = new ImageView(new Image(getClass().getResourceAsStream(arenaPath)));
         bg.setFitWidth(1300);
         bg.setFitHeight(700);
 
         // AI - trái
-        enemy = new ImageView( new Image(getClass().getResourceAsStream("/img/character/dausi_trai.png")));
+        String enemyPath = randomEnemy();
+        enemy = new ImageView( new Image(getClass().getResourceAsStream(enemyPath)));
         enemy.setFitWidth(220);
         enemy.setFitHeight(260);
         enemy.setLayoutX(120);
-        enemy.setLayoutY(300);
+        enemy.setLayoutY(280);
 
         // Player - phải
-        player = new ImageView(new Image(getClass().getResourceAsStream("/img/character/trothu.png")));
+        player = new ImageView(new Image(getClass().getResourceAsStream(playerPath)));
         player.setFitWidth(220);
         player.setFitHeight(260);
         player.setLayoutX(1300 - 220 - 120);
-        player.setLayoutY(300);
+        player.setLayoutY(280);
 
         // thanh máu của AI
         enemyBar = new HealthBar(HealthBar.Align.LEFT);
@@ -66,6 +77,11 @@ public class ArenaView extends Pane{
         });
 
         setFocusTraversable(true);
+    }
+
+    private String randomEnemy() {
+        Random r = new Random();
+        return ENEMY_LIST.get(r.nextInt(ENEMY_LIST.size()));
     }
 
     public ImageView getPlayerView() { return player; }

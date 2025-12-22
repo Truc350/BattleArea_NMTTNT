@@ -37,12 +37,48 @@ public class PlayerSkillBar extends Pane {
         A1 = new SkillButton(createCircleButton("A1", "#3498db"));
         A2 = new SkillButton(createCircleButton("A2", "#f1c40f"));
         A3 = new SkillButton(createCircleButton("A3", "#e67e22"));
-        DEF = new SkillButton(createRectButton("Defend", "#9b59b6"));
-        HEAL = new SkillButton(createRectButton("Heal", "#1abc9c"));
+        DEF = new SkillButton(createRectButton("DEFEND", "#9b59b6"));
+        HEAL = new SkillButton(createRectButton("HEAL", "#1abc9c"));
 
-        Button atkBtn = new Button("A");
-        atkBtn.setPrefSize(100, 50);
-        atkBtn.setStyle("-fx-background-color:#2ecc71; -fx-text-fill:white; -fx-font-size:14px; -fx-background-radius:18;");
+//        Button atkBtn = new Button("A");
+//        atkBtn.setPrefSize(100, 50);
+//        atkBtn.setStyle("-fx-background-color:#2ecc71; -fx-text-fill:white; -fx-font-size:14px; -fx-background-radius:18;");
+        Button atkBtn = new Button("ATTACK");
+        atkBtn.setPrefSize(120, 55);
+        atkBtn.setStyle("""
+    -fx-background-radius: 25;
+    -fx-background-color: linear-gradient(to bottom, #2ecc71, #27ae60);
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 12, 0, 0, 4);
+""");
+
+        atkBtn.setOnMouseEntered(e ->
+                atkBtn.setStyle("""
+        -fx-background-radius: 25;
+        -fx-background-color: linear-gradient(to bottom, #58d68d, #2ecc71);
+        -fx-text-fill: white;
+        -fx-font-size: 16px;
+        -fx-font-weight: bold;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0,255,0,0.8), 14, 0, 0, 0);
+    """)
+        );
+
+        atkBtn.setOnMouseExited(e ->
+                atkBtn.setStyle("""
+        -fx-background-radius: 25;
+        -fx-background-color: linear-gradient(to bottom, #2ecc71, #27ae60);
+        -fx-text-fill: white;
+        -fx-font-size: 16px;
+        -fx-font-weight: bold;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 12, 0, 0, 4);
+    """)
+        );
+
         ATK = new SkillButton(atkBtn);
 
         // ==============================
@@ -227,17 +263,81 @@ public class PlayerSkillBar extends Pane {
     // ============================================================
     private Button createRectButton(String text, String color) {
         Button btn = new Button(text);
-        btn.setPrefSize(65, 35);
-        btn.setStyle("-fx-background-radius: 10; -fx-background-color:" + color
-                + "; -fx-font-size:13px; -fx-text-fill:white;");
+        btn.setPrefSize(75, 45);
+        btn.setStyle("""
+        -fx-background-radius: 14;
+        -fx-background-color: linear-gradient(to bottom, %s, derive(%s,-25%%));
+        -fx-text-fill: white;
+        -fx-font-size: 13px;
+        -fx-font-weight: bold;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 8, 0, 0, 3);
+    """.formatted(color, color));
+
+        btn.setOnMouseEntered(e ->
+                btn.setStyle("""
+            -fx-background-radius: 14;
+            -fx-background-color: linear-gradient(to bottom, derive(%s,25%%), %s);
+            -fx-text-fill: white;
+            -fx-font-size: 13px;
+            -fx-font-weight: bold;
+            -fx-cursor: hand;
+            -fx-effect: dropshadow(gaussian, rgba(0,255,255,0.6), 10, 0, 0, 0);
+        """.formatted(color, color))
+        );
+
+        btn.setOnMouseExited(e ->
+                btn.setStyle("""
+            -fx-background-radius: 14;
+            -fx-background-color: linear-gradient(to bottom, %s, derive(%s,-25%%));
+            -fx-text-fill: white;
+            -fx-font-size: 13px;
+            -fx-font-weight: bold;
+            -fx-cursor: hand;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 8, 0, 0, 3);
+        """.formatted(color, color))
+        );
         return btn;
     }
 
     private Button createCircleButton(String text, String color) {
         Button btn = new Button(text);
-        btn.setPrefSize(35, 35);
-        btn.setStyle("-fx-background-radius: 25; -fx-background-color:" + color
-                + "; -fx-font-size:13px; -fx-text-fill:white;");
+        btn.setPrefSize(40, 40);
+        btn.setStyle("""
+        -fx-background-radius: 30;
+        -fx-background-color: %s;
+        -fx-text-fill: white;
+        -fx-font-size: 14px;
+        -fx-font-weight: bold;
+        -fx-cursor: hand;
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 6, 0, 0, 2);
+    """.formatted(color));
+
+        // Hover
+        btn.setOnMouseEntered(e ->
+                btn.setStyle("""
+            -fx-background-radius: 30;
+            -fx-background-color: derive(%s, 20%%);
+            -fx-text-fill: white;
+            -fx-font-size: 14px;
+            -fx-font-weight: bold;
+            -fx-cursor: hand;
+            -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.8), 10, 0, 0, 0);
+        """.formatted(color))
+        );
+
+        // Exit
+        btn.setOnMouseExited(e ->
+                btn.setStyle("""
+            -fx-background-radius: 30;
+            -fx-background-color: %s;
+            -fx-text-fill: white;
+            -fx-font-size: 14px;
+            -fx-font-weight: bold;
+            -fx-cursor: hand;
+            -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 6, 0, 0, 2);
+        """.formatted(color))
+        );
         return btn;
     }
 
