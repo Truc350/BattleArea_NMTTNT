@@ -28,7 +28,7 @@ public abstract class Hero {
         // Basic Attack: KHÔNG hồi mana (healMP=0), luôn dùng
         skills.add(new Skill("Basic Attack", 0, 0, attack, 0, 0));
         // Mana Regen: Hồi mana
-        skills.add(new Skill("Mana Regen", 0, 2, 0, 0, 15));
+        skills.add(new Skill("Mana Regen", 0, 3, 0, 10, 15));
     }
 
     public boolean useSkill(String skillName, long currentTime, Hero target) {
@@ -147,9 +147,6 @@ public abstract class Hero {
         }
         Hero hero;
         switch (type) {
-            case FIGHTER:
-                hero = new Fighter(name, maxHP, maxMP, position, attack, defense);
-                break;
             case MARKSMAN:
                 hero = new Marksman(name, maxHP, maxMP, position, attack, defense);
                 break;
@@ -163,6 +160,21 @@ public abstract class Hero {
                 hero = new Fighter(name, maxHP, maxMP, position, attack, defense);
         }
         return hero;
+    }
+
+    // Di chuyển RA XA đối thủ
+    // Di chuyển RA XA đối thủ (lùi lại)
+    public void moveAway(Hero target, double speed) {
+        double dx = this.position.getX() - target.getPosition().getX();
+        double dy = this.position.getY() - target.getPosition().getY();
+        double dist = Math.hypot(dx, dy);
+
+        if (dist > 0.001) {
+            double newX = this.position.getX() + (dx / dist) * speed;
+            double newY = this.position.getY() + (dy / dist) * speed;
+
+            this.position = new Point(newX, newY);  // constructor sẽ tự clamp nếu vượt giới hạn
+        }
     }
 
     public double distanceTo(AIPlayer aiPlayer) {
