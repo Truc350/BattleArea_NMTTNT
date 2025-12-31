@@ -76,36 +76,63 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
 
     // ======================= TẠO NHÁNH CON – 100% SẠCH BUG =======================
     private List<GameState> generateSuccessors(GameState state, boolean maxPlayer) {
-        List<GameState> list = new ArrayList<>();
-        Hero aiBase = state.aiHero;
-        Hero playerBase = state.playerHero;
+        List<GameState> successors = new ArrayList<>();
+        Hero current = maxPlayer ? state.aiHero : state.playerHero;
+        Hero target = maxPlayer ? state.playerHero : state.aiHero;
         long nextTime = state.time + 1000;
 
-        Hero current = maxPlayer ? aiBase : playerBase;
-        Hero target  = maxPlayer ? playerBase : aiBase;
+        Hero aiBase = deepCopy(state.aiHero);
+        Hero plBase = deepCopy(state.playerHero);
 
-        // 1. Basic Attack
-        {
-            Hero aiCopy = deepCopy(aiBase);
-            Hero plCopy = deepCopy(playerBase);
-            (maxPlayer ? plCopy : aiCopy).takeDamage((maxPlayer ? aiCopy : plCopy).getAttack());
-            list.add(new GameState(aiCopy, plCopy, nextTime, new Move("Basic Attack", (maxPlayer ? aiCopy : plCopy).getAttack(), (int)nextTime)));
-        }
-
-        // 2. Tất cả skill có thể dùng (kể cả Mana Regen)
-        for (Skill s : current.getSkills()) {
-            if (s.canUse(state.time, current.getMp())) {
-                Hero aiCopy = deepCopy(aiBase);
-                Hero plCopy = deepCopy(playerBase);
+        // 1. TẤT CẢ SKILL (Basic, Mana Regen, Ultimate...)
+        for (Skill skill : current.getSkills()) {
+            if (skill.canUse(state.time, current.getMp())) {
+                Hero aiCopy = deepCopy(state.aiHero);
+                Hero plCopy = deepCopy(state.playerHero);
                 Hero user = maxPlayer ? aiCopy : plCopy;
                 Hero targ = maxPlayer ? plCopy : aiCopy;
 
-                if (user.useSkill(s.getName(), state.time, targ)) {
-                    list.add(new GameState(aiCopy, plCopy, nextTime, new Move(s.getName(), s.getDamage(), (int)nextTime)));
+                if (user.useSkill(skill.getName(), state.time, targ)) {
+                    successors.add(new GameState(aiCopy, plCopy, nextTime,
+                            new Move(skill.getName(), skill.getDamage(), (int) nextTime)));
                 }
             }
         }
-        return list;
+
+        // 2. MOVE CLOSER (lao tới)
+        {
+            Hero aiCopy = deepCopy(aiBase);
+            Hero plCopy = deepCopy(plBase);
+            Hero user = maxPlayer ? aiCopy : plCopy;
+            user.getPosition().moveToward(target.getPosition(), Point.MOVE_SPEED);
+            successors.add(new GameState(aiCopy, plCopy, nextTime, new Move("Move Closer", 0, (int) nextTime)));
+        }
+
+        // 3. MOVE AWAY (lùi xa) - MỚI!
+        {
+            Hero aiCopy = deepCopy(aiBase);
+            Hero plCopy = deepCopy(plBase);
+            Hero user = maxPlayer ? aiCopy : plCopy;
+            user.moveAway(target, Point.MOVE_SPEED);
+            successors.add(new GameState(aiCopy, plCopy, nextTime, new Move("Move Away", 0, (int) nextTime)));
+        }
+
+        // 4. JUMP UP (nhảy lùi xa gấp đôi + bonus MP nếu low) - MỚI!
+        {
+            Hero aiCopy = deepCopy(aiBase);
+            Hero plCopy = deepCopy(plBase);
+            Hero user = maxPlayer ? aiCopy : plCopy;
+            user.moveAway(target, Point.MOVE_SPEED * 2);  // Lùi xa gấp đôi
+            if (user.getMp() < 20) user.setMp(Math.min(100, user.getMp() + 5));  // Bonus MP nhỏ
+            successors.add(new GameState(aiCopy, plCopy, nextTime, new Move("Jump Up", 0, (int) nextTime)));
+        }
+
+        // Move ordering cho maxPlayer
+        if (maxPlayer) {
+            successors.sort((a, b) -> Integer.compare(b.getMove().getDamage(), a.getMove().getDamage()));
+        }
+
+        return successors;
     }
 
     // ======================= HÀM ĐÁNH GIÁ – CỰC KỲ KHÔN =======================
@@ -113,8 +140,8 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
         Hero ai = s.aiHero;
         Hero pl = s.playerHero;
 
-        if (ai.getHp() <= 0)  return -5000000;
-        if (pl.getHp() <= 0)  return  5000000;
+        if (ai.getHp() <= 0) return -5000000;
+        if (pl.getHp() <= 0) return 5000000;
 
         int score = 0;
 
@@ -138,6 +165,18 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
         // Ưu tiên skill siêu mạnh
         if (ai.getMp() >= 22) score += 2000; // đủ Ultimate Rage
         if (ai.getMp() >= 30) score += 4000;
+
+        // Bonus lớn cho Mana Regen khi low HP/MP
+        if (ai.getHp() <= 40 || ai.getMp() <= 20) {
+            score += 5000;  // Ưu tiên regen khi nguy kịch
+        }
+        // Phạt nếu quá gần (nguy hiểm burst)
+        double dist = ai.getPosition().distanceTo(pl.getPosition());
+        if (dist <= 1.5) score -= 3000;  // Lùi xa nếu sát nhau
+
+        // Thưởng nếu lùi xa an toàn
+        if (dist > 3.0) score += 2000;
+
 
         return score;
     }

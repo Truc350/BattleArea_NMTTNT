@@ -4,7 +4,7 @@ public class Game {
     private Player player;
     private AIPlayer aiPlayer;
     private double distance;
-    private static final double ATTACK_RANGE = 2.5; // ví dụ 2.5 đơn vị
+    private static final double ATTACK_RANGE = 2.0;
 
     public Game() {
     }

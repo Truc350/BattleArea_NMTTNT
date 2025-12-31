@@ -13,5 +13,13 @@ public class Move {
 
     public String getName() { return name; }
 
+    public int getDamage() {
+        return damage;
+    }
+
+    public int getTime() {
+        return time;
+    }
+
     @Override public String toString() { return name + " (dmg=" + damage + ")"; }
 }
