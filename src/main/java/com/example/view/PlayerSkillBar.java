@@ -10,6 +10,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 public class PlayerSkillBar extends Pane {
@@ -18,6 +20,8 @@ public class PlayerSkillBar extends Pane {
     private final BattleController battleController; // Tham chiếu đến logic thật
 
     private SkillButton A1, A2, A3, DEF, HEAL, ATK;
+    private Text a1Cooldown, a2Cooldown, a3Cooldown;
+    private Text healCooldown, defCooldown;
 
     public PlayerSkillBar(ArenaView arena, BattleController battleController) {
         this.arena = arena;
@@ -42,12 +46,29 @@ public class PlayerSkillBar extends Pane {
 
         ATK = new SkillButton(atkBtn);
 
+        // ✅ TẠO TEXT COOLDOWN
+        a1Cooldown = createCooldownText();
+        a2Cooldown = createCooldownText();
+        a3Cooldown = createCooldownText();
+        healCooldown = createCooldownText();
+        defCooldown = createCooldownText();
+
+        // ===== LAYOUT VỚI COOLDOWN TEXT =====
+        // Column cho A1, A2, A3 với cooldown text bên dưới
+        VBox a1Box = new VBox(2, A1, a1Cooldown);
+        VBox a2Box = new VBox(2, A2, a2Cooldown);
+        VBox a3Box = new VBox(2, A3, a3Cooldown);
+
         // ===== LAYOUT =====
-        VBox col = new VBox(10, A1, A2, A3);
+        VBox col = new VBox(5, a1Box, a2Box, a3Box);
         col.setLayoutX(0);
         col.setLayoutY(0);
 
-        HBox row = new HBox(20, DEF, HEAL);
+        // Row cho DEF, HEAL với cooldown text bên dưới
+        VBox defBox = new VBox(3, DEF, defCooldown);
+        VBox healBox = new VBox(3, HEAL, healCooldown);
+
+        HBox row = new HBox(20, defBox, healBox);
         row.setLayoutX(-200);
         row.setLayoutY(45);
 
@@ -99,7 +120,12 @@ public class PlayerSkillBar extends Pane {
 
     public void showGameOver(String txt) {
         Label lb = new Label(txt);
-        lb.setStyle("-fx-font-size:48px;-fx-text-fill:red;-fx-font-weight:bold;");
+        lb.setStyle(
+                "-fx-font-size: 50px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: " + (txt.equals("YOU WIN!") ? "gold" : "red") + ";" +
+                        "-fx-effect: dropshadow(gaussian, black, 10, 0.5, 0, 0);"
+        );
         lb.setLayoutX(450);
         lb.setLayoutY(300);
         arena.getChildren().add(lb);
@@ -107,7 +133,11 @@ public class PlayerSkillBar extends Pane {
         // Delay 3 giây rồi quay về chọn sàn đấu
         PauseTransition delay = new PauseTransition(Duration.seconds(3));
         delay.setOnFinished(e -> {
-            MainApp.showAreaSelect();
+            try {
+                MainApp.showAreaSelect();
+            } catch (Exception ex) {
+                System.out.println("Không thể quay về màn hình chọn sàn: " + ex.getMessage());
+            }
         });
         delay.play();
     }
@@ -138,5 +168,66 @@ public class PlayerSkillBar extends Pane {
                 -fx-font-weight: bold;
                 """.formatted(color));
         return b;
+    }
+
+    private Text createCooldownText() {
+        Text text = new Text("");
+        text.setFont(Font.font("Arial", 14));
+        text.setFill(Color.RED);
+        text.setStyle("-fx-font-weight: bold;");
+        return text;
+    }
+
+    public void updateCooldowns(int cd1, int cd2, int cd3, int cdHeal, int cdDef) {
+//        a1Cooldown.setText(cd1 > 0 ? "CD: " + cd1 : "");
+//        a2Cooldown.setText(cd2 > 0 ? "CD: " + cd2 : "");
+//        a3Cooldown.setText(cd3 > 0 ? "CD: " + cd3 : "");
+
+        // Disable button khi đang cooldown
+        A1.getButton().setDisable(cd1 > 0);
+        A2.getButton().setDisable(cd2 > 0);
+        A3.getButton().setDisable(cd3 > 0);
+
+        // Visual feedback
+        A1.setOpacity(cd1 > 0 ? 0.5 : 1.0);
+        A2.setOpacity(cd2 > 0 ? 0.5 : 1.0);
+        A3.setOpacity(cd3 > 0 ? 0.5 : 1.0);
+
+        // Overlay cho A1, A2, A3
+        drawOverlay(A1.getOverlay(), cd1 > 0);
+        drawOverlay(A2.getOverlay(), cd2 > 0);
+        drawOverlay(A3.getOverlay(), cd3 > 0);
+
+        // HEAL, DEF
+//        healCooldown.setText(cdHeal > 0 ? "CD: " + cdHeal : "");
+//        defCooldown.setText(cdDef > 0 ? "CD: " + cdDef : "");
+
+        HEAL.getButton().setDisable(cdHeal > 0);
+        DEF.getButton().setDisable(cdDef > 0);
+
+        HEAL.setOpacity(cdHeal > 0 ? 0.5 : 1.0);
+        DEF.setOpacity(cdDef > 0 ? 0.5 : 1.0);
+
+        // Overlay cho HEAL, DEF
+        drawOverlay(HEAL.getOverlay(), cdHeal > 0);
+        drawOverlay(DEF.getOverlay(), cdDef > 0);
+    }
+
+    public void disableAllButtons() {
+        ATK.getButton().setDisable(true);
+        A1.getButton().setDisable(true);
+        A2.getButton().setDisable(true);
+        A3.getButton().setDisable(true);
+        HEAL.getButton().setDisable(true);
+        DEF.getButton().setDisable(true);
+
+        ATK.setOpacity(0.5);
+        A1.setOpacity(0.5);
+        A2.setOpacity(0.5);
+        A3.setOpacity(0.5);
+        HEAL.setOpacity(0.5);
+        DEF.setOpacity(0.5);
+
+        System.out.println("🚫 All buttons disabled!");
     }
 }

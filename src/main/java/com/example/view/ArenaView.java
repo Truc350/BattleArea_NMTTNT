@@ -1,6 +1,7 @@
 package com.example.view;
 
 import com.example.controller.GameController;
+import com.example.controller.MovementController;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
