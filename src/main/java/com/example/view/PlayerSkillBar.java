@@ -213,7 +213,7 @@ public class PlayerSkillBar extends Pane {
         }
     }
 
-    private void showGameOver(String txt) {
+    public void showGameOver(String txt) {
         Label lb = new Label(txt);
         lb.setStyle("-fx-font-size:48px;-fx-text-fill:red;-fx-font-weight:bold;");
         lb.setLayoutX(450);

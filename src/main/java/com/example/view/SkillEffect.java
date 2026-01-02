@@ -153,7 +153,7 @@ public class SkillEffect {
         tt.play();
     }
 
-    private static Node createGameOverLabel(String gameOver) {
+    public static Node createGameOverLabel(String gameOver) {
         Label label = new Label(gameOver);
         label.setStyle("""
         -fx-font-size: 48px;

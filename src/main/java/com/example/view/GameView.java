@@ -9,6 +9,12 @@ public class GameView {
     private String characterPath;
     private GameController controller;
 
+    public GameView(String arenaPath, String characterPath) {
+        this.arenaPath = arenaPath;
+        this.characterPath = characterPath;
+        this.controller = GameController.getInstance();
+    }
+
     public GameView(String arenaPath, String characterPath, GameController controller) {
         this.arenaPath = arenaPath;
         this.characterPath = characterPath;
