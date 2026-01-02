@@ -34,13 +34,14 @@ public class GameView {
         // Bây giờ tạo PlayerSkillBar với 2 tham số: arena + battleController
         PlayerSkillBar skillBar = new PlayerSkillBar(arena, battleController);
 
+        battleController.setSkillBar(skillBar);
+
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);
         arena.getChildren().add(skillBar);
 
-//        Pane root = new Pane(arena, skillBar);
         arena.requestFocus();
-        Scene scene = new Scene(getScene().getRoot(), 1300, 700);
+        Scene scene = new Scene(arena, 1300, 700);
         scene.setOnMouseClicked(e -> arena.requestFocus());
         return scene;
     }
