@@ -34,4 +34,8 @@ public class Game {
     public double getDistance() {
         return distance;
     }
+
+    public void setPlayer(Player player) {
+
+    }
 }

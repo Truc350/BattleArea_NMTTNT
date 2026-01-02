@@ -1,5 +1,6 @@
 package com.example.view;
 
+import com.example.controller.GameController;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
@@ -17,6 +18,7 @@ public class ArenaView extends Pane{
 
     private ImageView player, enemy;
     private HealthBar playerBar, enemyBar;
+    private GameController controller;
 
     public enum Turn {
         PLAYER, AI
@@ -24,7 +26,8 @@ public class ArenaView extends Pane{
     private Turn currentTurn = Turn.PLAYER;
     private boolean gameOver = false;
 
-    public ArenaView(String arenaPath, String playerPath){
+    public ArenaView(String arenaPath, String playerPath, GameController controller){
+        this.controller = controller;
         setPrefSize(1300, 700);
 
         ImageView bg = new ImageView(new Image(getClass().getResourceAsStream(arenaPath)));
@@ -115,6 +118,13 @@ public class ArenaView extends Pane{
 
     public void setGameOver(boolean value) {
         gameOver = value;
+
+        // Khi game over, gọi controller
+        if (value && controller != null) {
+            // Kiểm tra ai thắng dựa vào HP
+            boolean playerWon = enemyBar.getCurrentHp() <= 0;
+            controller.onGameOver(playerWon);
+        }
     }
 
     public void setupInitialDistance() {
