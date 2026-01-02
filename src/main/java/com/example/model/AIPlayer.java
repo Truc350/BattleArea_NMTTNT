@@ -3,15 +3,13 @@ package com.example.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (hoặc Marksman nếu muốn chí mạng)
-
+public class AIPlayer extends Hero {
     private static final int MAX_DEPTH = 7;        // đủ sâu để tính trước 3-4 lượt
     private boolean useAlphaBeta = true;
 
     public AIPlayer(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         super(name, maxHP, maxMP, position, attack, defense);
     }
-
 
     public String chooseBestAction(long currentTime, Hero opponent, Game game) {
         if (!game.isRange()) {
@@ -45,7 +43,6 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
         return bestMove.getName();
     }
 
-    // ======================= ALPHA-BETA SIÊU TỐI ƯU =======================
     private int alphaBeta(GameState state, int depth, boolean maximizingPlayer, int alpha, int beta) {
         if (depth == 0 || state.isTerminal()) {
             return evaluate(state);
@@ -135,7 +132,7 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
         return successors;
     }
 
-    // ======================= HÀM ĐÁNH GIÁ – CỰC KỲ KHÔN =======================
+
     private int evaluate(GameState s) {
         Hero ai = s.aiHero;
         Hero pl = s.playerHero;
@@ -176,8 +173,6 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
 
         // Thưởng nếu lùi xa an toàn
         if (dist > 3.0) score += 2000;
-
-
         return score;
     }
 
@@ -195,4 +190,16 @@ public class AIPlayer extends Fighter {   // ← BẮT BUỘC extends Fighter (h
         }
         return copy;
     }
+
+    // move , di chuyen
+    public void executeMove(String moveName, long time, Hero opponent) {
+        if ("Move Closer".equals(moveName)) {
+            this.getPosition().moveToward(opponent.getPosition(), Point.MOVE_SPEED);
+        } else if ("Move Away".equals(moveName)) {
+            this.moveAway(opponent, Point.MOVE_SPEED);
+        } else {
+            this.useSkill(moveName, time, opponent);  // Skill hoặc Basic
+        }
+    }
+
 }

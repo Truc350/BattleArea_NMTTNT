@@ -180,4 +180,5 @@ public abstract class Hero {
     public double distanceTo(AIPlayer aiPlayer) {
         return this.position.distanceTo(aiPlayer.getPosition());
     }
+
 }
