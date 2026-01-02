@@ -1,5 +1,6 @@
 package com.example.view;
 
+import com.example.controller.GameController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -16,8 +17,10 @@ import javafx.scene.layout.*;
 import java.net.URL;
 
 public class CharacterSelectView {
+    private GameController controller;
     private String arenaPath;
-    public CharacterSelectView(String arenaPath) {
+    public CharacterSelectView(GameController controller, String arenaPath) {
+        this.controller = controller;
         this.arenaPath = arenaPath;
     }
 
@@ -86,7 +89,7 @@ public class CharacterSelectView {
 
             // ====== CLICK → VÀO GAME ======
             frame.setOnMouseClicked(e ->
-                    MainApp.showGame(arenaPath, path)
+                    controller.onCharacterSelected(path)
             );
 
             chars.getChildren().add(frame);

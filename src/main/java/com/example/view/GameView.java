@@ -1,31 +1,32 @@
 package com.example.view;
 
+import com.example.controller.GameController;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 
 public class GameView {
 
     private String arenaPath;
     private String characterPath;
+    private GameController controller;
 
-    public GameView(String arenaPath, String characterPath) {
+    public GameView(String arenaPath, String characterPath, GameController controller) {
         this.arenaPath = arenaPath;
         this.characterPath = characterPath;
+        this.controller = controller;
     }
 
     public Scene getScene() {
-        ArenaView arena = new ArenaView(arenaPath, characterPath);
+        ArenaView arena = new ArenaView(arenaPath, characterPath, controller);
         arena.setupInitialDistance();
-        PlayerSkillBar skillBar = new PlayerSkillBar(arena);
 
+        PlayerSkillBar skillBar = new PlayerSkillBar(arena);
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);
-
-        Pane root = new Pane(arena, skillBar);
+        arena.getChildren().add(skillBar);
 
         arena.requestFocus();
 
-        return new Scene(root, 1300, 700);
+        return new Scene(arena, 1300, 700);
     }
 
 
