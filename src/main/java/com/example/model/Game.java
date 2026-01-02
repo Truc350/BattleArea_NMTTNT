@@ -31,8 +31,18 @@ public class Game {
         return aiPlayer;
     }
 
-    public double getDistance() {
-        return distance;
+//    public double getDistance() {
+//        return distance;
+//    }
+    public  double getDistance(){
+        return player.getHero().getPosition().distanceTo(aiPlayer.getPosition());
+    }
+    public String getPlayerStatus(){
+        Hero p = player.getHero();
+        return String.format("HP: %d/100 | MP: %d/100 | Pos: %s", p.getHp(), p.getMp(), p.getPosition());
+    }
+    public  String  getAIStatus(){
+        return String.format("HP: %d/100 | MP: %d/100 | Pos: %s", aiPlayer.getHp(), aiPlayer.getMp(), aiPlayer.getPosition());
     }
 
     public void setPlayer(Player player) {
