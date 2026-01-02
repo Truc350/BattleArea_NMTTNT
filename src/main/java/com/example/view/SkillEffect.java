@@ -112,7 +112,8 @@ public class SkillEffect {
             String imagePath,
             int damage,
             String explosionPath,
-            int explosionSize, Runnable onHit
+            int explosionSize,
+            Runnable onHit
     ) {
         ImageView skill = new ImageView(
                 new Image(SkillEffect.class.getResourceAsStream(imagePath))
@@ -125,8 +126,12 @@ public class SkillEffect {
 
         arena.getChildren().add(skill);
 
+        // Tính khoảng cách cần bay: từ vị trí bắt đầu đến trước player
+        double targetX = arena.getPlayerView().getLayoutX() - 50;
+        double distance = targetX - startX;
+
         TranslateTransition tt = new TranslateTransition(Duration.seconds(1), skill);
-        tt.setByX(+900); // AI bay từ trái sang phải
+        tt.setByX(distance); // AI bay từ trái sang phải
 
         tt.setOnFinished(e -> {
             arena.getChildren().remove(skill);

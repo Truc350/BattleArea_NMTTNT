@@ -58,6 +58,8 @@ public class ArenaView extends Pane{
 
         getChildren().addAll(bg, enemy, player, enemyBar, playerBar);
 
+        setupInitialDistance();
+
         // di chuyen player
         setOnKeyPressed(event -> {
             double step = 10; // tốc độ di chuyển mỗi lần nhấn
@@ -114,4 +116,16 @@ public class ArenaView extends Pane{
     public void setGameOver(boolean value) {
         gameOver = value;
     }
+
+    public void setupInitialDistance() {
+        MovementController.moveTo(enemy, 220, null);
+
+        // Player bên phải (xa hơn)
+        MovementController.moveTo(player, 1300 - 220 - 250, null);
+
+        enemyBar.setLayoutX(enemy.getLayoutX() + 70);
+        playerBar.setLayoutX(player.getLayoutX() + 70);
+    }
+
+
 }

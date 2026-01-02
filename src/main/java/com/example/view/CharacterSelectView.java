@@ -48,12 +48,17 @@ public class CharacterSelectView {
                 continue;
             }
 
-            ImageView img = new ImageView(
-                    new Image(url.toExternalForm())
-            );
-            img.setFitWidth(200);
-            img.setFitHeight(260);
-            img.setPreserveRatio(false);
+            ImageView img = new ImageView(new Image(url.toExternalForm()));
+
+            if (path.contains("/img/character/trothu_phai.png")) {
+                img.setFitWidth(240);   // rộng hơn
+                img.setFitHeight(260);  // giữ chiều cao
+            } else {
+                img.setFitWidth(200);
+                img.setFitHeight(260);
+            }
+
+            img.setPreserveRatio(true);
 
             // ====== FRAME BỌC NHÂN VẬT ======
             StackPane frame = new StackPane(img);
@@ -90,7 +95,7 @@ public class CharacterSelectView {
         StackPane background = new StackPane();
         background.setPrefSize(1300, 700);
 
-        URL bgUrl = getClass().getResource("/img/character/backgroundCharacter.png");
+        URL bgUrl = getClass().getResource("/img/arena/backgroundNhanVat.jpg");
         if (bgUrl != null) {
             background.setBackground(new Background(
                     new BackgroundImage(
