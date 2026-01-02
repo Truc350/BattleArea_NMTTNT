@@ -58,12 +58,12 @@ public class ArenaSelectView {
             // Bọc ảnh trong khung
             StackPane frame = new StackPane(img);
 
-            frame.setStyle("""
-                            -fx-border-color: white;
-                            -fx-border-width: 3;
-                            -fx-border-radius: 10;
-                            -fx-background-radius: 10;
-                    """);
+//            frame.setStyle("""
+//                            -fx-border-color: white;
+//                            -fx-border-width: 3;
+//                            -fx-border-radius: 10;
+//                            -fx-background-radius: 10;
+//                    """);
 
             frame.setOnMouseEntered(e -> {
                 frame.setScaleX(1.08);

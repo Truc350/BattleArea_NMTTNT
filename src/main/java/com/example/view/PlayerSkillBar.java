@@ -1,6 +1,7 @@
 package com.example.view;
 
 import com.example.controller.BattleController;
+import javafx.animation.PauseTransition;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -9,6 +10,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.util.Duration;
 
 public class PlayerSkillBar extends Pane {
 
@@ -101,6 +103,13 @@ public class PlayerSkillBar extends Pane {
         lb.setLayoutX(450);
         lb.setLayoutY(300);
         arena.getChildren().add(lb);
+
+        // Delay 3 giây rồi quay về chọn sàn đấu
+        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+        delay.setOnFinished(e -> {
+            MainApp.showAreaSelect();
+        });
+        delay.play();
     }
 
     // =====================================================
