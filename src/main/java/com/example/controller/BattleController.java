@@ -1,9 +1,7 @@
 package com.example.controller;
 
 import com.example.model.*;
-import com.example.view.ArenaView;
-import com.example.view.PlayerSkillBar;
-import com.example.view.SkillEffect;
+import com.example.view.*;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
@@ -147,13 +145,30 @@ public class BattleController {
     }
 
     private void aiRandomAttack() {
+        // ===== AI quyết định di chuyển trước khi đánh (50% tiến gần, 50% lùi xa) =====
+        if (random.nextBoolean()) {
+            // Tiến gần player
+            enemyHero.getPosition().moveToward(playerHero.getPosition(), Point.MOVE_SPEED);
+            System.out.println("AI tiến gần hơn để burst!");
+        } else {
+            // Lùi xa player để kite
+            enemyHero.getPosition().moveAway(playerHero.getPosition(), Point.MOVE_SPEED);
+            System.out.println("AI lùi xa để an toàn!");
+        }
+
+        // ===== Đồng bộ vị trí mới lên view với animation mượt =====
+        syncPositionsToView();
+
+        // ===== Tính damage random =====
         int damage = enemyHero.getAttack() + random.nextInt(10, 20);
+
         playerHero.takeDamage(damage);
         updateHealthBars();
 
+        // ===== Animation skill AI bay từ vị trí mới (sau khi di chuyển xong) =====
         SkillEffect.castSkillAI(
                 arenaView,
-                arenaView.getEnemyView().getLayoutX() + 200,
+                arenaView.getEnemyView().getLayoutX() + 200,  // vị trí bắt đầu từ enemy mới
                 arenaView.getEnemyView().getLayoutY() + 60,
                 "/img/attackEffect/chieu2.png",
                 damage,
@@ -180,4 +195,61 @@ public class BattleController {
 
     public void onDefend() {
     }
+
+    public void onMoveCloser() {
+        if (!arenaView.isPlayerTurn()) return;
+
+        playerHero.getPosition().moveToward(enemyHero.getPosition(), Point.MOVE_SPEED);
+        syncPositionsToView();
+        endPlayerTurn();
+    }
+
+    public void onMoveAway() {
+        if (!arenaView.isPlayerTurn()) return;
+
+        playerHero.getPosition().moveAway(enemyHero.getPosition(), Point.MOVE_SPEED);
+        syncPositionsToView();
+        endPlayerTurn();
+    }
+
+    public void onJumpUp() {
+        if (!arenaView.isPlayerTurn()) return;
+
+        playerHero.getPosition().moveAway(enemyHero.getPosition(), Point.MOVE_SPEED * 2);
+        if (playerHero.getMp() < 30) {
+            playerHero.setMp(Math.min(100, playerHero.getMp() + 10));
+            updateHealthBars();
+        }
+        syncPositionsToView();
+        endPlayerTurn();
+    }
+    private void syncPositionsToView() {
+        double scale = 80.0;  // Tỷ lệ model → pixel (tùy chỉnh nếu cần)
+        double offsetX = 600; // Căn giữa màn hình
+
+        // Player
+        MovementController.moveTo(
+                arenaView.getPlayerView(),
+                playerHero.getPosition().getX() * scale + offsetX,
+                () -> updateHealthBarPositions()
+        );
+
+        // Enemy
+        MovementController.moveTo(
+                arenaView.getEnemyView(),
+                enemyHero.getPosition().getX() * scale + offsetX,
+                () -> updateHealthBarPositions()
+        );
+    }
+    private void updateHealthBarPositions() {
+        HealthBar playerBar = arenaView.getPlayerBar();
+        HealthBar enemyBar = arenaView.getEnemyBar();
+
+        playerBar.setLayoutX(arenaView.getPlayerView().getLayoutX() + 70);
+        playerBar.setLayoutY(arenaView.getPlayerView().getLayoutY() - 80);
+
+        enemyBar.setLayoutX(arenaView.getEnemyView().getLayoutX() + 70);
+        enemyBar.setLayoutY(arenaView.getEnemyView().getLayoutY() - 80);
+    }
+
 }

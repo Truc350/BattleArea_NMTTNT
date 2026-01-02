@@ -40,8 +40,9 @@ public class GameView {
 
 //        Pane root = new Pane(arena, skillBar);
         arena.requestFocus();
-
-        return new Scene(arena, 1300, 700);
+        Scene scene = new Scene(getScene().getRoot(), 1300, 700);
+        scene.setOnMouseClicked(e -> arena.requestFocus());
+        return scene;
     }
 
 }
