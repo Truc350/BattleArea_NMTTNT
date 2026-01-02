@@ -7,8 +7,9 @@ import javafx.scene.layout.Pane;
 import java.util.List;
 import java.util.Random;
 
-public class ArenaView extends Pane{
+public class ArenaView extends Pane {
 
+    // Danh sách ảnh enemy (AI) random mỗi trận
     private static final List<String> ENEMY_LIST = List.of(
             "/img/character/dausi_trai.png",
             "/img/character/phap_su_trai.png",
@@ -16,86 +17,97 @@ public class ArenaView extends Pane{
             "/img/character/trothu_trai.png"
     );
 
-    private ImageView player, enemy;
-    private HealthBar playerBar, enemyBar;
-    private GameController controller;
+    private ImageView player;      // Nhân vật người chơi (bên phải)
+    private ImageView enemy;       // Nhân vật AI (bên trái)
+    private HealthBar playerBar;   // Thanh HP/MP người chơi
+    private HealthBar enemyBar;    // Thanh HP/MP AI
+    private GameController controller;  // Tham chiếu đến controller chính
 
+    // Quản lý lượt chơi
     public enum Turn {
         PLAYER, AI
     }
-    private Turn currentTurn = Turn.PLAYER;
+    private Turn currentTurn = Turn.PLAYER;  // Player đánh trước
     private boolean gameOver = false;
 
-    public ArenaView(String arenaPath, String playerPath, GameController controller){
-        this.controller = controller;
+    public ArenaView(String arenaPath, String playerPath) {
+        this.controller = GameController.getInstance();  // Lấy singleton
+
         setPrefSize(1300, 700);
 
+        // Background sân đấu
         ImageView bg = new ImageView(new Image(getClass().getResourceAsStream(arenaPath)));
         bg.setFitWidth(1300);
         bg.setFitHeight(700);
 
-        // AI - trái
+        // Tạo enemy random bên trái
         String enemyPath = randomEnemy();
-        enemy = new ImageView( new Image(getClass().getResourceAsStream(enemyPath)));
+        enemy = new ImageView(new Image(getClass().getResourceAsStream(enemyPath)));
         enemy.setFitWidth(220);
         enemy.setFitHeight(260);
         enemy.setLayoutX(120);
         enemy.setLayoutY(280);
 
-        // Player - phải
+        // Tạo player bên phải
         player = new ImageView(new Image(getClass().getResourceAsStream(playerPath)));
         player.setFitWidth(220);
         player.setFitHeight(260);
-        player.setLayoutX(1300 - 220 - 120);
+        player.setLayoutX(1300 - 220 - 120);  // Căn phải
         player.setLayoutY(280);
 
-        // thanh máu của AI
+        // Thanh máu enemy (căn trái)
         enemyBar = new HealthBar(HealthBar.Align.LEFT);
         enemyBar.setLayoutX(enemy.getLayoutX() + 70);
         enemyBar.setLayoutY(enemy.getLayoutY() - 80);
 
-        // thanh máu của player
+        // Thanh máu player (căn phải)
         playerBar = new HealthBar(HealthBar.Align.RIGHT);
         playerBar.setLayoutX(player.getLayoutX() + 70);
         playerBar.setLayoutY(player.getLayoutY() - 80);
 
+        // Thêm tất cả vào Pane (thứ tự: bg đầu tiên để nằm dưới)
         getChildren().addAll(bg, enemy, player, enemyBar, playerBar);
 
+        // Đặt vị trí ban đầu có khoảng cách (animation mượt)
         setupInitialDistance();
 
-        // di chuyen player
+        // ===== DI CHUYỂN BẰNG PHÍM MŨI TÊN =====
         setOnKeyPressed(event -> {
-            double step = 10; // tốc độ di chuyển mỗi lần nhấn
+            double step = 10; // Tốc độ mỗi lần nhấn
 
             switch (event.getCode()) {
-                case LEFT: // phím mũi tên trái
+                case LEFT:  // Lùi xa
                     player.setLayoutX(player.getLayoutX() - step);
                     break;
-
-                case RIGHT: // phím mũi tên phải
+                case RIGHT: // Tiến gần
                     player.setLayoutX(player.getLayoutX() + step);
+                    break;
+                default:
                     break;
             }
 
-            // Cập nhật vị trí thanh máu chạy theo nhân vật
+            // Thanh máu player di chuyển theo nhân vật
             playerBar.setLayoutX(player.getLayoutX() + 70);
         });
 
+        // Cho phép Pane nhận sự kiện phím
         setFocusTraversable(true);
+        requestFocus(); // Tập trung ngay khi vào trận
     }
 
+    // Random enemy mỗi trận
     private String randomEnemy() {
         Random r = new Random();
         return ENEMY_LIST.get(r.nextInt(ENEMY_LIST.size()));
     }
 
+    // ===== GETTER CHO CÁC CLASS KHÁC DÙNG =====
     public ImageView getPlayerView() { return player; }
     public ImageView getEnemyView() { return enemy; }
-
     public HealthBar getPlayerBar() { return playerBar; }
     public HealthBar getEnemyBar() { return enemyBar; }
 
-
+    // ===== QUẢN LÝ LƯỢT =====
     public boolean isPlayerTurn() {
         return currentTurn == Turn.PLAYER;
     }
@@ -112,6 +124,7 @@ public class ArenaView extends Pane{
         currentTurn = Turn.PLAYER;
     }
 
+    // ===== GAME OVER =====
     public boolean isGameOver() {
         return gameOver;
     }
@@ -119,7 +132,6 @@ public class ArenaView extends Pane{
     public void setGameOver(boolean value) {
         gameOver = value;
 
-        // Khi game over, gọi controller
         if (value && controller != null) {
             // Kiểm tra ai thắng dựa vào HP
             boolean playerWon = enemyBar.getCurrentHp() <= 0;
@@ -127,15 +139,16 @@ public class ArenaView extends Pane{
         }
     }
 
+    // ===== ĐẶT VỊ TRÍ BAN ĐẦU (CÓ KHOẢNG CÁCH) =====
     public void setupInitialDistance() {
+        // Enemy bên trái
         MovementController.moveTo(enemy, 220, null);
 
-        // Player bên phải (xa hơn)
+        // Player bên phải, xa hơn
         MovementController.moveTo(player, 1300 - 220 - 250, null);
 
+        // Update thanh máu theo vị trí mới
         enemyBar.setLayoutX(enemy.getLayoutX() + 70);
         playerBar.setLayoutX(player.getLayoutX() + 70);
     }
-
-
 }
