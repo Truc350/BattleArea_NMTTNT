@@ -19,19 +19,27 @@ import java.net.URL;
 public class CharacterSelectView {
     private GameController controller;
     private String arenaPath;
+
+    public CharacterSelectView() {
+        this.controller = GameController.getInstance();
+    }
+
     public CharacterSelectView(GameController controller, String arenaPath) {
         this.controller = controller;
         this.arenaPath = arenaPath;
+    }
+
+    public CharacterSelectView(String arenaPath) {
     }
 
     public Scene getScene() {
 
         Label title = new Label("CHỌN NHÂN VẬT");
         title.setStyle("""
-                -fx-font-size: 40px;
-                -fx-font-weight: bold;
-                -fx-text-fill: white;
-        """);
+                        -fx-font-size: 40px;
+                        -fx-font-weight: bold;
+                        -fx-text-fill: white;
+                """);
         title.setEffect(new DropShadow(8, Color.BLACK));
 
         HBox chars = new HBox(40);
@@ -66,11 +74,11 @@ public class CharacterSelectView {
             // ====== FRAME BỌC NHÂN VẬT ======
             StackPane frame = new StackPane(img);
             frame.setStyle("""
-                    -fx-border-color: white;
-                    -fx-border-width: 2;
-                    -fx-border-radius: 10;
-                    -fx-background-radius: 10;
-            """);
+                            -fx-border-color: white;
+                            -fx-border-width: 2;
+                            -fx-border-radius: 10;
+                            -fx-background-radius: 10;
+                    """);
 
             // ====== HOVER EFFECT (CHỈ NHÂN VẬT ĐƯỢC CHẠM) ======
             frame.setOnMouseEntered(e -> {
@@ -89,7 +97,7 @@ public class CharacterSelectView {
 
             // ====== CLICK → VÀO GAME ======
             frame.setOnMouseClicked(e ->
-                    controller.onCharacterSelected(path)
+                    GameController.getInstance().onCharacterSelected(path)
             );
 
             chars.getChildren().add(frame);

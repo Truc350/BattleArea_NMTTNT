@@ -16,6 +16,10 @@ import java.net.URL;
 public class ArenaSelectView {
     private GameController controller;
 
+    public ArenaSelectView() {
+        this.controller = GameController.getInstance();
+    }
+
     public ArenaSelectView(GameController controller) {
         this.controller = controller;
     }

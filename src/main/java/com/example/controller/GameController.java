@@ -1,97 +1,72 @@
 package com.example.controller;
 
-import com.example.model.Game;
 import com.example.view.*;
-import javafx.animation.PauseTransition;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
 public class GameController {
-    private Game game;
-    private Stage primaryStage;
 
-    // Lưu lại arena và character đã chọn
+    private static GameController instance;
+    private final Stage stage;
+
     private String selectedArenaPath;
     private String selectedCharacterPath;
 
-    public GameController(Stage primaryStage){
-        this.primaryStage = primaryStage;
-        this.game = new Game();
-
-        primaryStage.setTitle("Battle Area");
-        primaryStage.setResizable(false);
+    public GameController(Stage stage) {
+        this.stage = stage;
+        instance = this;
     }
 
-    /**
-     * Bắt đầu game - hiển thị intro
-     */
-    public void start() {
-        showIntro();
+    public static GameController getInstance() {
+        return instance;
     }
 
-    /**
-     * Hiển thị màn hình intro (3 giây tự động chuyển)
-     */
-    private void showIntro() {
-        IntroView introView = new IntroView();
-        Scene scene = introView.getScene();
-        primaryStage.setScene(scene);
-        primaryStage.show();
+    public void showIntro() {
+        Scene introScene = new IntroView().getScene();
+        stage.setScene(introScene);
+        stage.show();
 
-        // Tự động chuyển sang ArenaSelect sau 3 giây
         PauseTransition delay = new PauseTransition(Duration.seconds(3));
         delay.setOnFinished(e -> showArenaSelect());
         delay.play();
     }
 
-    /**
-     * Hiển thị màn hình chọn Arena
-     */
     public void showArenaSelect() {
-        ArenaSelectView arenaSelectView = new ArenaSelectView(this);
-        Scene scene = arenaSelectView.getScene();
-        primaryStage.setScene(scene);
+        Scene scene = new ArenaSelectView().getScene();
+        stage.setScene(scene);
     }
 
-    /**
-     * Được gọi khi user click chọn arena
-     */
     public void onArenaSelected(String arenaPath) {
         this.selectedArenaPath = arenaPath;
-        showCharacterSelect();
+        showCharacterSelect(arenaPath);
     }
 
-    /**
-     * Hiển thị màn hình chọn nhân vật
-     */
-    private void showCharacterSelect() {
-        CharacterSelectView characterSelectView = new CharacterSelectView(this, selectedArenaPath);
-        Scene scene = characterSelectView.getScene();
-        primaryStage.setScene(scene);
+    public void showCharacterSelect(String arenaPath) {
+        Scene scene = new CharacterSelectView(arenaPath).getScene();
+        stage.setScene(scene);
     }
 
-    /**
-     * Được gọi khi user click chọn nhân vật
-     */
     public void onCharacterSelected(String characterPath) {
         this.selectedCharacterPath = characterPath;
-        startBattle();
+
+        if (selectedArenaPath != null && selectedCharacterPath != null) {
+            showGame(selectedArenaPath, selectedCharacterPath);
+        }
     }
 
-    /**
-     * Bắt đầu trận chiến
-     */
-    private void startBattle() {
-        // Tạo GameView với arena và character đã chọn
-        GameView gameView = new GameView(selectedArenaPath, selectedCharacterPath, this);
-        Scene scene = gameView.getScene();
-        primaryStage.setScene(scene);
+    public void showGame(String arenaPath, String characterPath) {
+        Scene scene = new GameView(arenaPath, characterPath).getScene();
+        stage.setScene(scene);
     }
 
-    /**
-     * Được gọi khi game kết thúc
-     */
+    public void returnToArenaSelect() {
+        PauseTransition delay = new PauseTransition(Duration.seconds(2));
+        delay.setOnFinished(e -> showArenaSelect());
+        delay.play();
+    }
+
     public void onGameOver(boolean playerWon) {
         System.out.println(playerWon ? "🎉 Player thắng!" : "💀 Player thua!");
 
@@ -100,19 +75,4 @@ public class GameController {
         delay.setOnFinished(e -> showArenaSelect());
         delay.play();
     }
-
-    /**
-     * Getter cho game model
-     */
-    public Game getGame() {
-        return game;
-    }
-
-    /**
-     * Getter cho stage
-     */
-    public Stage getStage() {
-        return primaryStage;
-    }
-
 }
