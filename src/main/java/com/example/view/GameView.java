@@ -15,12 +15,16 @@ public class GameView {
 
     public Scene getScene() {
         ArenaView arena = new ArenaView(arenaPath, characterPath);
+        arena.setupInitialDistance();
         PlayerSkillBar skillBar = new PlayerSkillBar(arena);
 
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);
 
         Pane root = new Pane(arena, skillBar);
+
+        arena.requestFocus();
+
         return new Scene(root, 1300, 700);
     }
 
