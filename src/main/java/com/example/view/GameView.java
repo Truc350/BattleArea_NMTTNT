@@ -1,13 +1,16 @@
 package com.example.view;
 
+import com.example.controller.BattleController;
 import com.example.controller.GameController;
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 
 public class GameView {
 
     private String arenaPath;
     private String characterPath;
     private GameController controller;
+
 
     public GameView(String arenaPath, String characterPath) {
         this.arenaPath = arenaPath;
@@ -22,18 +25,22 @@ public class GameView {
     }
 
     public Scene getScene() {
-        ArenaView arena = new ArenaView(arenaPath, characterPath, controller);
+        ArenaView arena = new ArenaView(arenaPath, characterPath);
         arena.setupInitialDistance();
 
-        PlayerSkillBar skillBar = new PlayerSkillBar(arena);
+        // Tạo BattleController trước (nó cần arena và characterPath)
+        BattleController battleController = new BattleController(arena, characterPath);
+
+        // Bây giờ tạo PlayerSkillBar với 2 tham số: arena + battleController
+        PlayerSkillBar skillBar = new PlayerSkillBar(arena, battleController);
+
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);
-        arena.getChildren().add(skillBar);
 
+        Pane root = new Pane(arena, skillBar);
         arena.requestFocus();
 
-        return new Scene(arena, 1300, 700);
+        return new Scene(root, 1300, 700);
     }
-
 
 }
