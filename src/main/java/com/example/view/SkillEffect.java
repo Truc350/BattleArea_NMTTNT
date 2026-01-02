@@ -126,40 +126,59 @@ public class SkillEffect {
 
         arena.getChildren().add(skill);
 
-        // Tính khoảng cách cần bay: từ vị trí bắt đầu đến trước player
-        double targetX = arena.getPlayerView().getLayoutX() - 50;
-        double distance = targetX - startX;
+        ImageView player = arena.getPlayerView();
 
         TranslateTransition tt = new TranslateTransition(Duration.seconds(1), skill);
-        tt.setByX(distance); // AI bay từ trái sang phải
+        tt.setByX(900); // AI bay từ trái sang phải
+
+        AnimationTimer checker = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                Bounds s = skill.localToScene(skill.getBoundsInLocal());
+                Bounds p = player.localToScene(player.getBoundsInLocal());
+
+                if (s.intersects(p)) {
+                    // Chạm → dừng bay, xóa skill
+                    tt.stop();
+                    this.stop();
+                    arena.getChildren().remove(skill);
+
+                    // Show explosion tại vị trí player
+                    showExplosion(
+                            arena,
+                            player.getLayoutX() + 50,
+                            player.getLayoutY() + 60,
+                            explosionPath,
+                            explosionSize
+                    );
+
+                    // Trừ máu player
+                    arena.getPlayerBar().takeDamage(damage, 0);
+
+                    if (onHit != null) onHit.run();
+
+                    return;
+                }
+            }
+        };
 
         tt.setOnFinished(e -> {
-            arena.getChildren().remove(skill);
-
-            showExplosion(
-                    arena,
-                    arena.getPlayerView().getLayoutX() + 50,
-                    arena.getPlayerView().getLayoutY() + 60,
-                    explosionPath,
-                    explosionSize
-            );
-
-            arena.getPlayerBar().takeDamage(damage, 0);
-
-            if (onHit != null) onHit.run();
-
+            checker.stop();
+            if (arena.getChildren().contains(skill))
+                arena.getChildren().remove(skill);
         });
 
+        checker.start();
         tt.play();
     }
 
     public static Node createGameOverLabel(String gameOver) {
         Label label = new Label(gameOver);
         label.setStyle("""
-        -fx-font-size: 48px;
-        -fx-text-fill: red;
-        -fx-font-weight: bold;
-    """);
+                    -fx-font-size: 48px;
+                    -fx-text-fill: red;
+                    -fx-font-weight: bold;
+                """);
 
         label.setLayoutX(500);
         label.setLayoutY(300);

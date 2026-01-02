@@ -36,11 +36,12 @@ public class GameView {
 
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);
+        arena.getChildren().add(skillBar);
 
-        Pane root = new Pane(arena, skillBar);
+//        Pane root = new Pane(arena, skillBar);
         arena.requestFocus();
 
-        return new Scene(root, 1300, 700);
+        return new Scene(arena, 1300, 700);
     }
 
 }
