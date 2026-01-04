@@ -46,6 +46,10 @@ public class Game {
     }
 
     public void setPlayer(Player player) {
-
+        this.player = player;
+        // Update distance nếu cần
+        if (this.aiPlayer != null) {
+            this.distance = player.getHero().getPosition().distanceTo(aiPlayer.getPosition());
+        }
     }
 }
