@@ -202,4 +202,14 @@ public class PlayerSkillBar extends Pane {
                 """.formatted(color));
         return b;
     }
+    public void disableHealButton() {
+        HEAL.getButton().setDisable(true);
+        HEAL.setOpacity(0.5);
+        drawOverlay(HEAL.getOverlay(), true);
+    }
+    public void disableDefendButton() {
+        DEF.getButton().setDisable(true);
+        DEF.setOpacity(0.5);
+        drawOverlay(DEF.getOverlay(), true);
+    }
 }

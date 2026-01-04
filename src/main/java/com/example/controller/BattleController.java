@@ -282,7 +282,7 @@ public class BattleController {
             System.out.println("   ✅ Heal thành công!");
             syncHealthBars();
             updateCooldowns();
-            endPlayerTurn();
+//            endPlayerTurn();
         } else {
             System.out.println("   ❌ Không thể Heal (không đủ MP hoặc đang cooldown)");
         }
@@ -291,7 +291,8 @@ public class BattleController {
     public void onDefend() {
         System.out.println("\n🛡️ Player: Defend (Turn " + currentTurn + ")");
         System.out.println("   → Player phòng thủ, skip turn");
-        endPlayerTurn();
+        player.getHero().setDefending(true);
+//        endPlayerTurn();
     }
 
     private void executePlayerSkill(String skillName, String imagePath, String explosionPath, int explosionSize) {
