@@ -48,12 +48,12 @@ public class CharacterDetailView {
                             "2. Mana Regen\n   • MP: 0  |  CD: 3s  |  Hồi: +10 HP, +15 MP\n   • Kỹ năng hồi phục\n\n" +
                             "3. Rage Strike\n   • MP: 10  |  CD: 4s  |  Damage: 14\n   • Đòn giận dữ mạnh mẽ",
                     "4. Fury Burst\n   • MP: 15  |  CD: 6s  |  Damage: 20\n   • Bùng nổ cuồng nộ\n\n" +
-                            "5. Ultimate Rage\n   • MP: 22  |  CD: 10s  |  Damage: 14 (x1.8)\n   • Cơn thịnh nộ tối thượng"
+                            "5. Ultimate Rage\n   • MP: 22  |  CD: 10s  |  Damage: 14 (x1.8 attack)\n   • Cơn thịnh nộ tối thượng"
             );
 
             case "Marksman" -> new CharacterInfo(
                     "MARKSMAN - XẠ THỦ",
-                    "HP: 100  |  MP: 100\nAttack: 10  |  Defense: 5\nCrit: 30% (x2 dmg)",
+                    "HP: 100  |  MP: 100\nAttack: 10  |  Defense: 5\nCrit Rate: 30% (x2 dmg)",
                     "✨ Damage cao nhất, yếu\n★ Có yếu tố RNG (crit)",
                     "1. Basic Attack\n   • MP: 0  |  CD: 0s  |  Dmg: 10 | Crit: 20\n   • Tấn công có crit\n\n" +
                             "2. Mana Regen\n   • MP: 0  |  CD: 3s  |  Hồi: +10 HP, +15 MP\n   • Kỹ năng hồi phục\n\n" +
@@ -76,7 +76,7 @@ public class CharacterDetailView {
             case "Support" -> new CharacterInfo(
                     "SUPPORT - TRỢ THỦ",
                     "HP: 100  |  MP: 100\nAttack: 5  |  Defense: 15",
-                    "✨ Sống dai nhất\n✨ Heal mạnh, dmg thấp",
+                    "✨ Sống dai nhất\n✨ Heal mạnh, damage thấp",
                     "1. Basic Attack\n   • MP: 0  |  CD: 0s  |  Damage: 5\n   • Tấn công nhẹ nhàng\n\n" +
                             "2. Mana Regen\n   • MP: 0  |  CD: 3s  |  Hồi: +10 HP, +15 MP\n   • Kỹ năng hồi phục\n\n" +
                             "3. Heal Wave\n   • MP: 15  |  CD: 7s  |  Hồi: +25 HP, +10 MP\n   • Làn sóng hồi phục",
@@ -168,40 +168,39 @@ public class CharacterDetailView {
         StackPane.setMargin(backButton, new Insets(20, 0, 0, 20));
 
         // Nội dung chính
-        VBox contentBox = new VBox(10);  // Tăng spacing
+        VBox contentBox = new VBox(5);  // Tăng spacing
         contentBox.setAlignment(Pos.CENTER);
-        contentBox.setPadding(new Insets(10, 20, 10, 20));  // Thêm padding
+        contentBox.setPadding(new Insets(5, 20, 5, 20));  // Thêm padding
 
         // Tiêu đề
         Label title = new Label(info.title);
         title.setStyle("""
-            -fx-font-size: 28px;
+            -fx-font-size: 26px;
             -fx-font-weight: bold;
             -fx-text-fill: #FFD700;
             """);
         title.setEffect(new DropShadow(10, Color.BLACK));
 
         // Phần trên: CHỈ SỐ CƠ BẢN + ĐẶC ĐIỂM
-        HBox topInfo = new HBox(30);
+        HBox topInfo = new HBox(20);
         topInfo.setAlignment(Pos.CENTER);
 
-        VBox infoBox = createInfoBox(info);
-        infoBox.setMaxWidth(Double.MAX_VALUE);
+        VBox infoBox = createCompactInfoBox(info);
 
         topInfo.getChildren().add(infoBox);
 
         // Phần giữa: KỸ NĂNG (trái) + NHÂN VẬT (giữa)
-        HBox middleContent = new HBox(60);
+        HBox middleContent = new HBox(50);
         middleContent.setAlignment(Pos.CENTER);
 
         // Kỹ năng bên trái
-        VBox skillsBox = createSkillsBox(info);
-        skillsBox.setMaxWidth(380);
-        skillsBox.setTranslateY(-20);
+        VBox skillsBox = createCompactSkillsBox(info);
+        skillsBox.setMaxWidth(350);
+        skillsBox.setTranslateY(-10);
 
         // Nhân vật ở giữa
         VBox characterBox = createCharacterImage(heroType);
-        characterBox.setTranslateY(20);
+        characterBox.setTranslateY(10);
 
         middleContent.getChildren().addAll(skillsBox, characterBox);
 
@@ -309,11 +308,41 @@ public class CharacterDetailView {
         String allSkills = info.skills1 + "\n\n" + info.skills2;
         Label skills = new Label(allSkills);
         skills.setStyle("""
-                -fx-font-size: 13px;
+                -fx-font-size: 14px;
                 -fx-text-fill: white;
                 -fx-font-weight: bold;
                 -fx-line-spacing: 2;
                 """);
+        skills.setEffect(new DropShadow(3, Color.BLACK));
+        skills.setWrapText(true);
+
+        skillsBox.getChildren().addAll(skillsTitle, skills);
+
+        return skillsBox;
+    }
+
+    // Hàm riêng cho Fighter
+    private VBox createCompactSkillsBox(CharacterInfo info) {
+        VBox skillsBox = new VBox(6);  // Spacing nhỏ hơn
+        skillsBox.setAlignment(Pos.TOP_LEFT);
+
+        Label skillsTitle = new Label("KỸ NĂNG");
+        skillsTitle.setStyle("""
+            -fx-font-size: 19px;
+            -fx-font-weight: bold;
+            -fx-text-fill: #FF6347;
+            """);
+        skillsTitle.setEffect(new DropShadow(5, Color.BLACK));
+
+        // Gộp tất cả kỹ năng
+        String allSkills = info.skills1 + "\n\n" + info.skills2;
+        Label skills = new Label(allSkills);
+        skills.setStyle("""
+            -fx-font-size: 13px;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-line-spacing: 1;
+            """);
         skills.setEffect(new DropShadow(3, Color.BLACK));
         skills.setWrapText(true);
 
@@ -378,6 +407,66 @@ public class CharacterDetailView {
 
         return infoBox;
     }
+
+    // Hàm riêng cho Fighter - GỌN HƠN
+    private VBox createCompactInfoBox(CharacterInfo info) {
+        VBox infoBox = new VBox(6);  // Spacing nhỏ hơn
+        infoBox.setAlignment(Pos.TOP_CENTER);
+
+        // Chỉ số cơ bản
+        Label statsTitle = new Label("CHỈ SỐ CƠ BẢN");
+        statsTitle.setStyle("""
+            -fx-font-size: 17px;
+            -fx-font-weight: bold;
+            -fx-text-fill: #00BFFF;
+            """);
+        statsTitle.setEffect(new DropShadow(5, Color.BLACK));
+
+        Label stats = new Label(info.stats);
+        stats.setStyle("""
+            -fx-font-size: 14px;
+            -fx-text-fill: white;
+            -fx-font-weight: bold;
+            -fx-line-spacing: 1.5;
+            -fx-text-alignment: center;
+            """);
+        stats.setEffect(new DropShadow(3, Color.BLACK));
+        stats.setWrapText(true);
+        stats.setMaxWidth(400);  // Rộng hơn
+
+        // Đường phân cách
+        Region separator = new Region();
+        separator.setPrefHeight(2);
+        separator.setMaxWidth(320);
+        separator.setStyle("-fx-background-color: #FFD700;");
+
+        // Đặc điểm
+        Label traitTitle = new Label("ĐẶC ĐIỂM");
+        traitTitle.setStyle("""
+            -fx-font-size: 17px;
+            -fx-font-weight: bold;
+            -fx-text-fill: #FFA500;
+            """);
+        traitTitle.setEffect(new DropShadow(5, Color.BLACK));
+
+        Label trait = new Label(info.trait);
+        trait.setStyle("""
+            -fx-font-size: 14px;
+            -fx-text-fill: #FFD700;
+            -fx-font-weight: bold;
+            -fx-line-spacing: 1.5;
+            -fx-text-alignment: center;
+            """);
+        trait.setEffect(new DropShadow(3, Color.BLACK));
+        trait.setWrapText(true);
+        trait.setMaxWidth(400);
+
+        infoBox.getChildren().addAll(statsTitle, stats, separator, traitTitle, trait);
+
+        return infoBox;
+    }
+
+
 
 
     // Class để lưu thông tin nhân vật
