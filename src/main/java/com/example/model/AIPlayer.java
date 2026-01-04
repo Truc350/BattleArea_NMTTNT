@@ -30,10 +30,19 @@ public class AIPlayer extends Hero {
      * @return Tên action được chọn
      */
     public String chooseBestAction(int currentTurn, Hero opponent, Game game) {
-        // Nếu chưa trong tầm đánh, di chuyển lại gần
-        if (!game.isRange()) {
+        double distance = this.getPosition().distanceTo(opponent.getPosition());
+        double myRange = this.getAttackRange();
+        System.out.println("   [AI] Khoảng cách đến player: " + distance);
+        System.out.println("   [AI] Tầm đánh: 6.0");
+        System.out.println("   [AI] Trong tầm? " + (distance <= 6.0));
+
+        // Nếu không trong tầm, di chuyển lại gần
+        if (distance > myRange) {
+            System.out.println("   [AI] NGOÀI tầm đánh, đang di chuyển lại gần");
             return "Move Closer";
         }
+
+        System.out.println("   [AI] ✓ Trong tầm đánh, đang tính toán hành động tốt nhất...");
 
         // Clear cache mỗi lượt mới
         transpositionTable.clear();
@@ -42,13 +51,15 @@ public class AIPlayer extends Hero {
         GameState root = new GameState(deepCopy(this), deepCopy(opponent), currentTurn);
         List<GameState> children = generateSuccessors(root, true);
 
+        System.out.println("   [AI] Generated " + children.size() + " possible actions");
+
         int bestScore = Integer.MIN_VALUE;
         Move bestMove = null;
 
         // Tìm move tốt nhất
         for (GameState child : children) {
             int score = alphaBeta(child, MAX_DEPTH - 1, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
-
+            System.out.println("   [AI]   → " + child.getMove().getName() + " = " + score);
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = child.getMove();
@@ -57,8 +68,7 @@ public class AIPlayer extends Hero {
 
         System.out.println("🤖 AI chọn: " + bestMove.getName() + " | Điểm dự đoán: " + bestScore);
 
-        // Thực hiện action thật
-        executeMove(bestMove.getName(), currentTurn, opponent);
+        // ✅ CHỈ TRẢ VỀ TÊN - KHÔNG EXECUTE
         return bestMove.getName();
     }
 
@@ -290,9 +300,10 @@ public class AIPlayer extends Hero {
     }
 
     /**
-     * Thực hiện action thật trong game
+     * Thực hiện DI CHUYỂN trong game (không dùng cho skill)
+     * Chỉ gọi từ BattleController khi AI chọn Move/Jump
      */
-    public void executeMove(String moveName, int currentTurn, Hero opponent) {
+    public void executeMovement(String moveName, Hero opponent) {
         if ("Move Closer".equals(moveName)) {
             this.getPosition().moveToward(opponent.getPosition(), Point.MOVE_SPEED);
             System.out.println("   → AI tiến lại gần");
@@ -305,13 +316,6 @@ public class AIPlayer extends Hero {
                 this.setMp(Math.min(100, this.getMp() + 5));
             }
             System.out.println("   → AI nhảy lùi (x2 distance)");
-        } else {
-            // Skill hoặc Basic Attack
-            if (this.useSkill(moveName, currentTurn, opponent)) {
-                System.out.println("   → AI dùng: " + moveName);
-            } else {
-                System.out.println("   → AI không thể dùng " + moveName);
-            }
         }
     }
 }

@@ -10,6 +10,7 @@ public abstract class Hero {
     protected Point position;
     protected int attack;
     protected int defense;
+    protected double attackRange;
     protected List<Skill> skills = new ArrayList<Skill>();
 
     public Hero(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
@@ -21,7 +22,16 @@ public abstract class Hero {
         this.position = position;
         this.attack = attack;
         this.defense = defense;
+        this.attackRange = 6.0;  // ← Default range
         initSkills();
+    }
+
+    public double getAttackRange() {
+        return attackRange;
+    }
+
+    public void setAttackRange(double attackRange) {
+        this.attackRange = attackRange;
     }
 
     protected void initSkills() {
@@ -66,8 +76,17 @@ public abstract class Hero {
     }
 
     public void takeDamage(int damage) {
+        System.out.println("   [Hero.takeDamage] " + name + " taking " + damage + " raw damage");
+        System.out.println("   [Hero.takeDamage] Defense: " + defense);
+
         int effective = Math.max(0, damage - defense);
+
+        System.out.println("   [Hero.takeDamage] Effective damage: " + effective);
+        System.out.println("   [Hero.takeDamage] HP before: " + hp);
+
         setHp(hp - effective);
+
+        System.out.println("   [Hero.takeDamage] HP after: " + hp);
     }
 
     // ============== GETTERS & SETTERS ==============
@@ -104,23 +123,39 @@ public abstract class Hero {
         int maxMP = 100;
         int attack = 15;
         int defense = 10;
+        double attackRange = 6.0;  // ← THÊM MỚI
 
         switch (type) {
             case FIGHTER:
-                attack = 8;
-                defense = 10;
+                maxHP = 100;
+                maxMP = 80;
+                attack = 15;
+                defense = 12;
+                attackRange = 4.0;   // ← THẤP NHẤT - cận chiến
                 break;
+
             case MARKSMAN:
-                attack = 10;
-                defense = 5;
+                maxHP = 100;
+                maxMP = 90;
+                attack = 18;
+                defense = 6;
+                attackRange = 8.0;   // ← CAO NHẤT - xa đánh
                 break;
+
             case MAGE:
-                attack = 5;
+                maxHP = 100;
                 maxMP = 100;
+                attack = 12;
+                defense = 7;
+                attackRange = 7.0;   // ← CAO - pháp thuật tầm xa
                 break;
+
             case SUPPORT:
-                attack = 5;
+                maxHP = 100;
+                maxMP = 100;
+                attack = 10;
                 defense = 15;
+                attackRange = 6.0;   // ← TRUNG BÌNH
                 break;
         }
 
@@ -138,6 +173,8 @@ public abstract class Hero {
             default:
                 hero = new Fighter(name, maxHP, maxMP, position, attack, defense);
         }
+
+        hero.setAttackRange(attackRange);  // ← SET RANGE
         return hero;
     }
 
@@ -159,5 +196,9 @@ public abstract class Hero {
 
     public double distanceTo(AIPlayer aiPlayer) {
         return this.position.distanceTo(aiPlayer.getPosition());
+    }
+    public boolean canAttack(Hero target) {
+        double distance = this.position.distanceTo(target.getPosition());
+        return distance <= this.attackRange;
     }
 }

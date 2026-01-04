@@ -33,8 +33,12 @@ public class GameView {
 
         // Bây giờ tạo PlayerSkillBar với 2 tham số: arena + battleController
         PlayerSkillBar skillBar = new PlayerSkillBar(arena, battleController);
+        if (skillBar == null) {
+            System.err.println("SkillBar is NULL!");
+        }
 
         battleController.setSkillBar(skillBar);
+        skillBar.enableAllButtons();
 
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);

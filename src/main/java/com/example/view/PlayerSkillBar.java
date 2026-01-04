@@ -79,6 +79,7 @@ public class PlayerSkillBar extends Pane {
      * @param cdDef Cooldown Defend
      */
     public void updateCooldowns(int cd1, int cd2, int cd3, int cdHeal, int cdDef) {
+        System.out.println("   [SkillBar] Update CD - A1:" + cd1 + " A2:" + cd2 + " A3:" + cd3);
         // Disable/Enable buttons
         A1.getButton().setDisable(cd1 > 0);
         A2.getButton().setDisable(cd2 > 0);
