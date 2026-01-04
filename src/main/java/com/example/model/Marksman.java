@@ -13,9 +13,9 @@ public class Marksman extends Hero {
     @Override
     public void initSkills() {
         super.initSkills();
-        skills.add(new Skill("Precision Shot", 6, 3, attack + 5, 0, 0));        // 15 dmg
-        skills.add(new Skill("Snipe", 12, 6, (int)(attack * 1.7), 0, 0));       // 17 dmg → crit 34
-        skills.add(new Skill("Deadly Arrow", 20, 10, (int)(attack * 2.5), 0, 0)); // 25 dmg → crit 50
+        skills.add(new Skill("Precision Shot", 8, 3, attack + 7, 0, 0));      // 25 damage (có thể crit x2 = 50)
+        skills.add(new Skill("Snipe", 15, 6, attack + 12, 0, 0));             // 30 damage (crit = 60)
+        skills.add(new Skill("Deadly Arrow", 25, 10, attack + 22, 0, 0));     // 40 damage (crit = 80)
     }
 
     /**

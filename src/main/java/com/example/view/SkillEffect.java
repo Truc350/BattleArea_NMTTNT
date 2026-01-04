@@ -65,8 +65,15 @@ public class SkillEffect {
                             enemy.getLayoutY() + 60,
                             ex, explosionSize);
 
+                    // ✅ Debug - Kiểm tra callback
+                    System.out.println("   [SkillEffect] Callback triggered!");
+
                     // ✅ GỌI CALLBACK - Controller xử lý logic game
-                    if (onHit != null) onHit.run();
+                    if (onHit != null) {
+                        onHit.run();
+                    } else {
+                        System.err.println("   ❌ Callback is NULL!");
+                    }
                     return;
                 }
             }
@@ -74,10 +81,13 @@ public class SkillEffect {
 
         tt.setOnFinished(e -> {
             checker.stop();
-            if (arena.getChildren().contains(skill))
+            if (arena.getChildren().contains(skill)) {
                 arena.getChildren().remove(skill);
+                System.out.println("   [SkillEffect] Animation finished without hit - removing skill");
+            }
         });
 
+        System.out.println("   [SkillEffect] Starting animation from X=" + startX + " Y=" + startY);
         checker.start();
         tt.play();
     }
@@ -131,8 +141,15 @@ public class SkillEffect {
                             explosionSize
                     );
 
+                    // ✅ Debug - Kiểm tra callback
+                    System.out.println("   [SkillEffect AI] Callback triggered!");
+
                     // ✅ GỌI CALLBACK - Controller xử lý logic game
-                    if (onHit != null) onHit.run();
+                    if (onHit != null) {
+                        onHit.run();
+                    } else {
+                        System.err.println("   ❌ AI Callback is NULL!");
+                    }
                     return;
                 }
             }
@@ -140,10 +157,13 @@ public class SkillEffect {
 
         tt.setOnFinished(e -> {
             checker.stop();
-            if (arena.getChildren().contains(skill))
+            if (arena.getChildren().contains(skill)) {
                 arena.getChildren().remove(skill);
+                System.out.println("   [SkillEffect AI] Animation finished without hit - removing skill");
+            }
         });
 
+        System.out.println("   [SkillEffect AI] Starting animation from X=" + startX + " Y=" + startY);
         checker.start();
         tt.play();
     }
@@ -152,6 +172,8 @@ public class SkillEffect {
      * Hiệu ứng nổ tại vị trí (x, y)
      */
     private static void showExplosion(Pane arena, double x, double y, String explosionPath, int explosionSize) {
+        System.out.println("   [SkillEffect] Showing explosion at X=" + x + " Y=" + y);
+
         ImageView boom = new ImageView(new Image(
                 SkillEffect.class.getResourceAsStream(explosionPath)
         ));
@@ -168,7 +190,10 @@ public class SkillEffect {
             FadeTransition ft = new FadeTransition(Duration.millis(200), boom);
             ft.setFromValue(1);
             ft.setToValue(0);
-            ft.setOnFinished(ev -> arena.getChildren().remove(boom));
+            ft.setOnFinished(ev -> {
+                arena.getChildren().remove(boom);
+                System.out.println("   [SkillEffect] Explosion animation complete");
+            });
             ft.play();
         });
         pause.play();
