@@ -5,22 +5,22 @@ public class GameState {
     public Hero aiHero;
     public Hero playerHero;
     private Move move;
-    public long time;
+    public int turn;// luot di
 
 
     // Constructor dùng cho root
-    public GameState(Hero ai, Hero player, long currentTime) {
+    public GameState(Hero ai, Hero player, int turn) {
         this.aiHero = ai;
         this.playerHero = player;
-        this.time = currentTime;
+        this.turn = turn;
         this.move = null;
     }
 
     // dùng khi tạo các trạng thái con
-    public GameState(Hero ai, Hero player, long time, Move move) {
+    public GameState(Hero ai, Hero player, int  turn, Move move) {
         this.aiHero = ai;
         this.playerHero = player;
-        this.time = time;
+        this.turn = turn;
         this.move = move;
     }
 
@@ -48,7 +48,7 @@ public class GameState {
         return move;
     }
 
-    public long getTime() {
-        return time;
+    public int getTurn() {
+        return turn;
     }
 }

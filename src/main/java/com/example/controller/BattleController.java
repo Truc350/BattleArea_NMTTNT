@@ -1,423 +1,359 @@
 package com.example.controller;
 
 import com.example.model.*;
-import com.example.view.*;
+import com.example.view.ArenaView;
+import com.example.view.PlayerSkillBar;
+import com.example.view.SkillEffect;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.util.Duration;
 
-import java.util.Random;
-
 public class BattleController {
-    private final ArenaView arenaView;
-    private PlayerSkillBar skillBar; // 🔥 gán sau bằng setter
-    private final Hero playerHero;
-    private final Hero enemyHero;
-    private final Game game;
-    private long currentTime;
-    private final Random random = new Random();
+    private ArenaView arena;
+    private PlayerSkillBar skillBar;
 
-    // ===== COOLDOWN SYSTEM (đếm theo lượt) =====
-    private int a1Cooldown = 0;  // A1: 2 lượt
-    private int a2Cooldown = 0;  // A2: 3 lượt
-    private int a3Cooldown = 0;  // A3: 4 lượt
-    private int healCooldown = 0; // Heal: 3 lượt
-    private int defCooldown = 0;  // Def: 3 lượt
+    // Model thực
+    private Game game;
+    private Player player;
+    private AIPlayer aiPlayer;
+    private int currentTurn = 1;
 
-    public BattleController(ArenaView arenaView, String characterPath) {
-        this.arenaView = arenaView;
+    // Character path để xác định Hero type
+    private String characterPath;
 
-        playerHero = createPlayerHero(characterPath);
-        enemyHero = createRandomEnemy();
+    public BattleController(ArenaView arena, String characterPath) {
+        this.arena = arena;
+        this.characterPath = characterPath;
 
-        Player playerWrapper = new Player(playerHero);
-        game = new Game(playerWrapper, (AIPlayer) enemyHero);
-
-        currentTime = System.currentTimeMillis();
-
-       forceUpdateHealthBars();
-
-        arenaView.startPlayerTurn();
+        initializeGame();
+        syncHealthBars();
     }
 
+    // =====================================================
+    // KHỞI TẠO GAME
+    // =====================================================
+    private void initializeGame() {
+        // Tạo vị trí ban đầu
+        Point playerPos = new Point(8.0, 0.0);  // Bên phải
+        Point aiPos = new Point(-8.0, 0.0);     // Bên trái
 
-    public void setSkillBar(PlayerSkillBar skillBar) {
-        this.skillBar = skillBar;
-        System.out.println("✅ SkillBar connected!");
+        // Tạo Hero cho Player dựa trên characterPath
+        Hero playerHero = createHeroFromPath(characterPath, playerPos);
+        player = new Player(playerHero);
+
+        // Tạo AI (random hero)
+        HeroType aiType = HeroType.values()[(int) (Math.random() * 4)];
+        aiPlayer = new AIPlayer("AI", 100, 100, aiPos, 10, 5);
+
+        // Khởi tạo Game
+        game = new Game(player, aiPlayer);
+
+        System.out.println("🎮 Game khởi tạo:");
+        System.out.println("   Player: " + playerHero.getName() + " (HP:" + playerHero.getHp() + ", MP:" + playerHero.getMp() + ")");
+        System.out.println("   AI: " + aiPlayer.getName() + " (HP:" + aiPlayer.getHp() + ", MP:" + aiPlayer.getMp() + ")");
     }
 
-    // ===================== HERO CREATE =====================
+    /**
+     * Tạo Hero từ character path
+     */
+    private Hero createHeroFromPath(String path, Point position) {
+        HeroType type;
+        String name;
 
-    private Hero createPlayerHero(String path) {
+        if (path.contains("dausi")) {
+            type = HeroType.FIGHTER;
+            name = "Fighter";
+        } else if (path.contains("phapsu") || path.contains("phap_su")) {
+            type = HeroType.MAGE;
+            name = "Mage";
+        } else if (path.contains("xathu")) {
+            type = HeroType.MARKSMAN;
+            name = "Marksman";
+        } else if (path.contains("trothu")) {
+            type = HeroType.SUPPORT;
+            name = "Support";
+        } else {
+            type = HeroType.FIGHTER;
+            name = "Fighter";
+        }
 
-        Point pos = new Point(1000, 280);
-        Hero hero;
-        if (path.contains("dausi")) hero = new Fighter("Bạn", 100, 100, pos, 16, 7);
-        else if (path.contains("xathu")) hero = new Marksman("Bạn", 100, 100, pos, 22, 4);
-        else if (path.contains("phapsu")) hero = new Mage("Bạn", 100, 100, pos, 12, 5);
-        else if (path.contains("trothu")) hero = new Support("Bạn", 100, 100, pos, 10, 12);
-        else hero = new Fighter("Bạn", 100, 100, pos, 16, 7);
-        System.out.println("✅ Player: " + hero.getClass().getSimpleName());
-        return hero;
+        return Hero.getHero(type, name, position);
     }
 
-    private Hero createRandomEnemy() {
-        Point pos = new Point(200, 280);
-        int rand = random.nextInt(4);
-        String name = "DEATH BOT ";
-        return switch (rand) {
-            case 0 -> new AIPlayer(name + "Fighter", 100, 100, pos, 16, 7);
-            case 1 -> new AIPlayer(name + "Marksman", 100, 100, pos, 22, 4);
-            case 2 -> new AIPlayer(name + "Mage", 100, 100, pos, 12, 5);
-            case 3 -> new AIPlayer(name + "Support", 100, 100, pos, 10, 12);
-            default -> new AIPlayer(name, 100, 100, pos, 18, 8);
-        };
+    // =====================================================
+    // SYNC UI VỚI MODEL
+    // =====================================================
+    private void syncHealthBars() {
+        arena.getPlayerBar().syncWithHero(player.getHero());
+        arena.getEnemyBar().syncWithHero(aiPlayer);
     }
 
-    private void forceUpdateHealthBars() {
-        int playerHp = playerHero.getHp();
-        int playerMp = playerHero.getMp();
-        int enemyHp = enemyHero.getHp();
-        int enemyMp = enemyHero.getMp();
+    private void updateCooldowns() {
+        Hero hero = player.getHero();
 
-        arenaView.getPlayerBar().setHp(playerHp);
-        arenaView.getPlayerBar().setMp(playerMp);
-        arenaView.getEnemyBar().setHp(enemyHp);
-        arenaView.getEnemyBar().setMp(enemyMp);
+        // Tính cooldown còn lại (lastUsedTurn + cooldown - currentTurn)
+        int cd1 = calculateRemainingCooldown(hero.getSkills().get(2)); // Skill thứ 3
+        int cd2 = calculateRemainingCooldown(hero.getSkills().get(3)); // Skill thứ 4
+        int cd3 = calculateRemainingCooldown(hero.getSkills().get(4)); // Skill thứ 5
+        int cdHeal = calculateRemainingCooldown(hero.getSkills().get(1)); // Mana Regen
+
+        skillBar.updateCooldowns(cd1, cd2, cd3, cdHeal, 0);
     }
 
-    // ===================== PLAYER ACTION =====================
+    private int calculateRemainingCooldown(Skill skill) {
+        int remaining = skill.getCooldownTurns() - (currentTurn - skill.getLastUsedTurn());
+        return Math.max(0, remaining);
+    }
 
+    // =====================================================
+    // PLAYER ACTIONS
+    // =====================================================
     public void onAttack() {
-        if (!arenaView.isPlayerTurn()) return;
-
-        int damage = playerHero.getAttack();
-        enemyHero.takeDamage(damage);
-        forceUpdateHealthBars();
-
-        SkillEffect.castSkill(
-                arenaView,
-                arenaView.getPlayerView().getLayoutX() - 20,
-                arenaView.getPlayerView().getLayoutY() + 60,
-                "/img/attackEffect/chieu2.png",
-                damage,
-                0,
+        System.out.println("\n⚔️ Player: Basic Attack (Turn " + currentTurn + ")");
+        executePlayerSkill("Basic Attack",
+                "/img/skills/attack.png",
                 "/img/explosion/explosion_thuong.png",
-                120,
-                this::endPlayerTurn
-        );
+                120);
     }
 
     public void onSkillA1() {
-        if (!arenaView.isPlayerTurn() || arenaView.isGameOver()) return;
-        if (a1Cooldown > 0) {
-            return;
-        }
-        int mpCost = 10;
-        if (playerHero.getMp() < mpCost) {
-            return;
-        }
+        System.out.println("\n🔵 Player: Skill A1 (Turn " + currentTurn + ")");
+        Hero hero = player.getHero();
+        String skillName = hero.getSkills().get(2).getName(); // Skill thứ 3
 
-        castSkill(20, mpCost, "/img/attackEffect/chieu2.png", 120);
-        a1Cooldown = 4;  // Cooldown 2 lượt
-
-        updateSkillBarCooldown();
+        executePlayerSkill(skillName,
+                "/img/skills/skill1.png",
+                "/img/explosion/explosion_manh.png",
+                150);
     }
 
     public void onSkillA2() {
-        if (!arenaView.isPlayerTurn() || arenaView.isGameOver()) return;
-        if (a2Cooldown > 0) {
-            return;
-        }
+        System.out.println("\n🟡 Player: Skill A2 (Turn " + currentTurn + ")");
+        Hero hero = player.getHero();
+        String skillName = hero.getSkills().get(3).getName(); // Skill thứ 4
 
-        int mpCost = 15;
-        if (playerHero.getMp() < mpCost) {
-            return;
-        }
-
-        castSkill(30, mpCost, "/img/attackEffect/chieu4.png", 140);
-        a2Cooldown = 6;
-        updateSkillBarCooldown();
+        executePlayerSkill(skillName,
+                "/img/skills/skill2.png",
+                "/img/explosion/explosion_lon.png",
+                180);
     }
 
     public void onSkillA3() {
-        if (!arenaView.isPlayerTurn() || arenaView.isGameOver()) return;
-        if (a3Cooldown > 0) {
-            return;
-        }
+        System.out.println("\n🟠 Player: Skill A3 (Turn " + currentTurn + ")");
+        Hero hero = player.getHero();
+        String skillName = hero.getSkills().get(4).getName(); // Skill thứ 5 (Ultimate)
 
-        int mpCost = 25;
-        if (playerHero.getMp() < mpCost) {
-            return;
-        }
-
-        castSkill(45, mpCost, "/img/attackEffect/chieu4.png", 160);
-        a3Cooldown = 8;
-        updateSkillBarCooldown();
-    }
-
-
-    private void castSkill(int damage, int mpCost, String effectPath, int explosionSize) {
-        if (!arenaView.isPlayerTurn()) return;
-
-        playerHero.setMp(playerHero.getMp() - mpCost);
-        enemyHero.takeDamage(damage);
-
-        forceUpdateHealthBars();
-
-        SkillEffect.castSkill(
-                arenaView,
-                arenaView.getPlayerView().getLayoutX() - 20,
-                arenaView.getPlayerView().getLayoutY() + 60,
-                effectPath,
-                damage,
-                mpCost,
-                "/img/explosion/explosion_1.png",
-                explosionSize,
-                this::endPlayerTurn
-        );
+        executePlayerSkill(skillName,
+                "/img/skills/skill3.png",
+                "/img/explosion/explosion_cuc_manh.png",
+                200);
     }
 
     public void onHeal() {
-        if (!arenaView.isPlayerTurn() || arenaView.isGameOver()) return;
+        System.out.println("\n💚 Player: Heal (Turn " + currentTurn + ")");
+        Hero hero = player.getHero();
 
-        if (healCooldown > 0) {
-            return;
+        boolean success = hero.useSkill("Mana Regen", currentTurn, hero);
+
+        if (success) {
+            System.out.println("   ✅ Heal thành công!");
+            syncHealthBars();
+            updateCooldowns();
+            endPlayerTurn();
+        } else {
+            System.out.println("   ❌ Không thể Heal (không đủ MP hoặc đang cooldown)");
         }
-
-        playerHero.setHp(Math.min(100, playerHero.getHp() + 35));
-
-        forceUpdateHealthBars();
-
-        healCooldown = 6;  // ✅ 3 lượt = 6 nửa lượt
-        updateSkillBarCooldown();
-        endPlayerTurn();
     }
 
     public void onDefend() {
-        if (!arenaView.isPlayerTurn() || arenaView.isGameOver()) return;
-
-        if (defCooldown > 0) {
-            return;
-        }
-        defCooldown = 6;  // ✅ 3 lượt = 6 nửa lượt
-        updateSkillBarCooldown();
-
+        System.out.println("\n🛡️ Player: Defend (Turn " + currentTurn + ")");
+        // Defend chỉ skip turn (tăng defense tạm thời nếu muốn)
+        System.out.println("   → Player phòng thủ, skip turn");
         endPlayerTurn();
     }
 
-    // ===================== TURN & AI =====================
+    /**
+     * Thực hiện skill của Player
+     */
+    private void executePlayerSkill(String skillName, String imagePath, String explosionPath, int explosionSize) {
+        Hero hero = player.getHero();
 
+        // Kiểm tra có thể dùng skill không
+        boolean canUse = false;
+        for (Skill skill : hero.getSkills()) {
+            if (skill.getName().equals(skillName) && skill.canUse(currentTurn, hero.getMp())) {
+                canUse = true;
+                break;
+            }
+        }
+
+        if (!canUse) {
+            System.out.println("   ❌ Không thể dùng skill (không đủ MP hoặc đang cooldown)");
+            return;
+        }
+
+        // Disable buttons ngay
+        skillBar.disableAllButtons();
+
+        // Animation
+        double startX = arena.getPlayerView().getLayoutX() + 50;
+        double startY = arena.getPlayerView().getLayoutY() + 100;
+
+        SkillEffect.castSkill(arena, startX, startY, imagePath, explosionPath, explosionSize, () -> {
+            // Callback sau khi animation chạm mục tiêu
+
+            // Thực hiện damage trong Model
+            boolean success = hero.useSkill(skillName, currentTurn, aiPlayer);
+
+            if (success) {
+                System.out.println("   ✅ Skill hit! AI HP: " + aiPlayer.getHp() + " | MP: " + aiPlayer.getMp());
+
+                // Sync UI
+                syncHealthBars();
+
+                // Kiểm tra game over
+                if (checkGameOver()) return;
+
+                // Kết thúc lượt player
+                endPlayerTurn();
+            }
+        });
+    }
+
+    // =====================================================
+    // TURN MANAGEMENT
+    // =====================================================
     private void endPlayerTurn() {
-        decreaseCooldowns();
+        currentTurn++;
+        updateCooldowns();
 
-        currentTime += 1000;
-        checkGameOver();
-        if (arenaView.isGameOver()) return;
+        System.out.println("📍 Kết thúc lượt Player. Turn hiện tại: " + currentTurn);
 
-        arenaView.endPlayerTurn();
-
-        PauseTransition delay = new PauseTransition(Duration.seconds(1.2));
-        delay.setOnFinished(e -> aiRandomAttack());
+        // Delay 1 giây rồi chuyển sang AI
+        PauseTransition delay = new PauseTransition(Duration.seconds(1));
+        delay.setOnFinished(e -> executeAITurn());
         delay.play();
     }
 
-    private void aiRandomAttack() {
-        if (arenaView.isGameOver()) return;
-        // ===== AI quyết định di chuyển (giới hạn khoảng cách ngắn) =====
-        double currentX = arenaView.getEnemyView().getLayoutX();
-        double newX = random.nextBoolean() ? currentX + 80 : currentX - 80;
-        int damage, mpCost = 0;
+    private void executeAITurn() {
+        System.out.println("\n🤖 AI Turn " + currentTurn);
 
-        // ===== AI quyết định di chuyển trước khi đánh (50% tiến gần, 50% lùi xa) =====
-        if (random.nextBoolean() && enemyHero.getMp() >= 15) {
-            // Tiến gần player
-            mpCost = 15;
-            damage = enemyHero.getAttack() + 30;
-            enemyHero.setMp(enemyHero.getMp() - mpCost);
+        // Gọi AI Minimax
+        String action = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+
+        System.out.println("   AI chọn: " + action);
+
+        // Xử lý action của AI
+        if (action.contains("Move")) {
+            handleAIMovement(action);
+        } else if (action.equals("Jump Up")) {
+            handleAIJumpUp();
         } else {
-            // Lùi xa player (nhưng không ra khỏi màn hình)
-            damage = enemyHero.getAttack() + random.nextInt(10, 20);
-        }
-
-        playerHero.takeDamage(damage);
-        forceUpdateHealthBars();
-
-        // ===== Di chuyển với giới hạn =====
-        MovementController.moveTo(
-                arenaView.getEnemyView(),
-                newX,
-                () -> {
-                    // Cập nhật thanh máu sau khi di chuyển xong
-                    arenaView.getEnemyBar().setLayoutX(arenaView.getEnemyView().getLayoutX() + 70);
-                    arenaView.getEnemyBar().setLayoutY(arenaView.getEnemyView().getLayoutY() - 80);
-                }, false
-        );
-
-        // ===== Animation skill AI bay từ vị trí mới (sau khi di chuyển xong) =====
-        SkillEffect.castSkillAI(
-                arenaView,
-                arenaView.getEnemyView().getLayoutX() + 200,  // vị trí bắt đầu từ enemy mới
-                arenaView.getEnemyView().getLayoutY() + 60,
-                "/img/attackEffect/chieu2.png",
-                damage,
-                "/img/explosion/explosion_thuong.png",
-                120,
-                () -> {
-                    decreaseCooldowns();
-
-                    checkGameOver();
-                    if (!arenaView.isGameOver()) {
-                        arenaView.startPlayerTurn();
-                    }
-                }
-        );
-    }
-
-    private void decreaseCooldowns() {
-        if (a1Cooldown > 0) a1Cooldown--;
-        if (a2Cooldown > 0) a2Cooldown--;
-        if (a3Cooldown > 0) a3Cooldown--;
-        if (healCooldown > 0) healCooldown--;
-        if (defCooldown > 0) defCooldown--;
-
-        updateSkillBarCooldown();
-    }
-
-    private void updateSkillBarCooldown() {
-        if (skillBar != null) {
-            int cd1 = (a1Cooldown + 1) / 2;
-            int cd2 = (a2Cooldown + 1) / 2;
-            int cd3 = (a3Cooldown + 1) / 2;
-            int cdHeal = (healCooldown + 1) / 2;
-            int cdDef = (defCooldown + 1) / 2;
-
-            skillBar.updateCooldowns(cd1, cd2, cd3, cdHeal, cdDef);
+            handleAISkill(action);
         }
     }
 
-    private void checkGameOver() {
-        if (playerHero.getHp() <= 0) {
-            System.out.println("💀 GAME OVER - Player died!");
-            arenaView.setGameOver(true);
+    private void handleAIMovement(String action) {
+        // Di chuyển AI
+        double currentX = arena.getEnemyView().getLayoutX();
+        double newX;
 
-            if (skillBar != null) {
-                skillBar.disableAllButtons();
-                skillBar.showGameOver("YOU LOSE!");
+        if (action.equals("Move Closer")) {
+            newX = currentX + 50; // Tiến gần
+        } else {
+            newX = currentX - 50; // Lùi xa
+        }
+
+        MovementController.moveTo(arena.getEnemyView(), newX, () -> {
+            arena.getEnemyBar().setLayoutX(arena.getEnemyView().getLayoutX() + 70);
+            endAITurn();
+        });
+    }
+
+    private void handleAIJumpUp() {
+        // Lùi xa x2
+        double currentX = arena.getEnemyView().getLayoutX();
+        double newX = currentX - 100;
+
+        MovementController.moveTo(arena.getEnemyView(), newX, () -> {
+            arena.getEnemyBar().setLayoutX(arena.getEnemyView().getLayoutX() + 70);
+            syncHealthBars(); // AI có thể regen MP
+            endAITurn();
+        });
+    }
+
+    private void handleAISkill(String skillName) {
+        // Animation AI skill
+        double startX = arena.getEnemyView().getLayoutX() + 50;
+        double startY = arena.getEnemyView().getLayoutY() + 100;
+
+        String imagePath = "/img/skills/attack.png";
+        String explosionPath = "/img/explosion/explosion_thuong.png";
+        int explosionSize = 120;
+
+        // Phân biệt skill để chọn effect
+        if (skillName.contains("Ultimate") || skillName.contains("Deadly") || skillName.contains("Meteor")) {
+            imagePath = "/img/skills/skill3.png";
+            explosionPath = "/img/explosion/explosion_cuc_manh.png";
+            explosionSize = 200;
+        } else if (skillName.contains("Burst") || skillName.contains("Lightning") || skillName.contains("Snipe")) {
+            imagePath = "/img/skills/skill2.png";
+            explosionPath = "/img/explosion/explosion_lon.png";
+            explosionSize = 180;
+        } else if (!skillName.equals("Basic Attack")) {
+            imagePath = "/img/skills/skill1.png";
+            explosionPath = "/img/explosion/explosion_manh.png";
+            explosionSize = 150;
+        }
+
+        // ✅ Tạo final reference
+        final String finalImagePath = imagePath;
+        final String finalExplosionPath = explosionPath;
+        final int finalExplosionSize = explosionSize;
+
+        SkillEffect.castSkillAI(arena, startX, startY, imagePath, explosionPath, explosionSize, new Runnable() {
+            @Override
+            public void run() {
+                syncHealthBars();
+                System.out.println("   ✅ AI skill hit! Player HP: " + player.getHero().getHp());
+                if (checkGameOver()) return;
+                endAITurn();
             }
-//            GameController.getInstance().onGameOver(false);
-
-        } else if (enemyHero.getHp() <= 0) {
-            System.out.println("🎉 GAME OVER - Enemy died!");
-            arenaView.setGameOver(true);
-            // ✅ Hiển thị YOU WIN
-            if (skillBar != null) {
-                skillBar.disableAllButtons();  // ← Disable tất cả nút
-                skillBar.showGameOver("YOU WIN!");
-            }
-//            GameController.getInstance().onGameOver(true);
-        }
+        });
     }
 
+    private void endAITurn() {
+        currentTurn++;
 
-    public void onMoveCloser() {
-        if (!arenaView.isPlayerTurn()) return;
+        System.out.println("📍 Kết thúc lượt AI. Turn hiện tại: " + currentTurn);
+        System.out.println("   Distance: " + game.getDistance());
 
-        double currentX = arenaView.getPlayerView().getLayoutX();
-        double newX = currentX - 80; // Tiến gần AI
-
-        MovementController.moveTo(
-                arenaView.getPlayerView(),
-                newX,
-                () -> {
-                    arenaView.getPlayerBar().setLayoutX(arenaView.getPlayerView().getLayoutX() + 70);
-                    arenaView.getPlayerBar().setLayoutY(arenaView.getPlayerView().getLayoutY() - 80);
-                }, true
-        );
-
-        endPlayerTurn();
+        // Enable buttons cho player
+        skillBar.enableAllButtons();
+        updateCooldowns();
     }
 
-    public void onMoveAway() {
-        if (!arenaView.isPlayerTurn()|| arenaView.isGameOver()) return;
-
-        double currentX = arenaView.getPlayerView().getLayoutX();
-        double newX = currentX + 80; // Lùi xa AI
-
-        MovementController.moveTo(
-                arenaView.getPlayerView(),
-                newX,
-                () -> {
-                    arenaView.getPlayerBar().setLayoutX(arenaView.getPlayerView().getLayoutX() + 70);
-                    arenaView.getPlayerBar().setLayoutY(arenaView.getPlayerView().getLayoutY() - 80);
-                },
-                true  // ← Player
-        );
-
-        endPlayerTurn();
-    }
-
-    public void onJumpUp() {
-        if (!arenaView.isPlayerTurn() || arenaView.isGameOver()) return;
-
-        double currentX = arenaView.getPlayerView().getLayoutX();
-        double newX = currentX + 150; // Nhảy xa hơn
-
-        MovementController.moveTo(
-                arenaView.getPlayerView(),
-                newX,
-                () -> {
-                    arenaView.getPlayerBar().setLayoutX(arenaView.getPlayerView().getLayoutX() + 70);
-                    arenaView.getPlayerBar().setLayoutY(arenaView.getPlayerView().getLayoutY() - 80);
-                }, true
-        );
-
-        if (playerHero.getMp() < 30) {
-            playerHero.setMp(Math.min(100, playerHero.getMp() + 10));
-            forceUpdateHealthBars();
+    // =====================================================
+    // GAME OVER
+    // =====================================================
+    private boolean checkGameOver() {
+        if (player.getHero().getHp() <= 0) {
+            System.out.println("\n💀 GAME OVER - AI WINS!");
+            skillBar.disableAllButtons();
+            skillBar.showGameOver("YOU LOSE!");
+            return true;
         }
 
-        endPlayerTurn();
-    }
-    private void syncPositionsToView() {
-        double scale = 80.0;  // Tỷ lệ model → pixel (tùy chỉnh nếu cần)
-        double offsetX = 600; // Căn giữa màn hình
+        if (aiPlayer.getHp() <= 0) {
+            System.out.println("\n🎉 GAME OVER - PLAYER WINS!");
+            skillBar.disableAllButtons();
+            skillBar.showGameOver("YOU WIN!");
+            return true;
+        }
 
-        // Player
-        MovementController.moveTo(
-                arenaView.getPlayerView(),
-                playerHero.getPosition().getX() * scale + offsetX,
-                () -> updateHealthBarPositions()
-        );
-
-        // Enemy
-        MovementController.moveTo(
-                arenaView.getEnemyView(),
-                enemyHero.getPosition().getX() * scale + offsetX,
-                () -> updateHealthBarPositions()
-        );
-    }
-    private void updateHealthBarPositions() {
-        HealthBar playerBar = arenaView.getPlayerBar();
-        HealthBar enemyBar = arenaView.getEnemyBar();
-
-        playerBar.setLayoutX(arenaView.getPlayerView().getLayoutX() + 70);
-        playerBar.setLayoutY(arenaView.getPlayerView().getLayoutY() - 80);
-
-        enemyBar.setLayoutX(arenaView.getEnemyView().getLayoutX() + 70);
-        enemyBar.setLayoutY(arenaView.getEnemyView().getLayoutY() - 80);
+        return false;
     }
 
-    // Getter cho skillBar để kiểm tra cooldown
-    public boolean isA1Ready() {
-        return a1Cooldown == 0;
-    }
-
-    public boolean isA2Ready() {
-        return a2Cooldown == 0;
-    }
-
-    public boolean isA3Ready() {
-        return a3Cooldown == 0;
+    public void setSkillBar(PlayerSkillBar skillBar) {
+        this.skillBar = skillBar;
     }
 }

@@ -25,16 +25,8 @@ public class ArenaView extends Pane {
     private HealthBar enemyBar;    // Thanh HP/MP AI
     private GameController controller;  // Tham chiếu đến controller chính
 
-    // Quản lý lượt chơi
-    public enum Turn {
-        PLAYER, AI
-    }
-
-    private Turn currentTurn = Turn.PLAYER;  // Player đánh trước
-    private boolean gameOver = false;
-
     public ArenaView(String arenaPath, String playerPath) {
-        this.controller = GameController.getInstance();  // Lấy singleton
+        this.controller = GameController.getInstance();
 
         setPrefSize(1300, 700);
 
@@ -46,9 +38,9 @@ public class ArenaView extends Pane {
         // Tạo enemy random bên trái
         String enemyPath = randomEnemy();
         enemy = new ImageView(new Image(getClass().getResourceAsStream(enemyPath)));
-        // AI - Set kích thước riêng cho trothu
+
         if (enemyPath.contains("/img/character/trothu_trai.png")) {
-            enemy.setFitWidth(280);  // ← Rộng hơn (như trong CharacterSelectView)
+            enemy.setFitWidth(280);
             enemy.setFitHeight(280);
         } else {
             enemy.setFitWidth(200);
@@ -61,9 +53,8 @@ public class ArenaView extends Pane {
         // Tạo player bên phải
         player = new ImageView(new Image(getClass().getResourceAsStream(playerPath)));
 
-        // Player - Set kích thước riêng cho trothu
         if (playerPath.contains("/img/character/trothu_phai.png")) {
-            player.setFitWidth(280);  // ← Rộng hơn
+            player.setFitWidth(280);
             player.setFitHeight(280);
         } else {
             player.setFitWidth(200);
@@ -83,43 +74,36 @@ public class ArenaView extends Pane {
         playerBar.setLayoutX(player.getLayoutX() + 70);
         playerBar.setLayoutY(player.getLayoutY() - 80);
 
-        // Thêm tất cả vào Pane (thứ tự: bg đầu tiên để nằm dưới)
         getChildren().addAll(bg, enemy, player, enemyBar, playerBar);
 
-//        // Đặt vị trí ban đầu có khoảng cách (animation mượt)
-//        setupInitialDistance();
-
-        // ===== DI CHUYỂN BẰNG PHÍM MŨI TÊN =====
+        // ===== DI CHUYỂN BẰNG PHÍM MŨI TÊN (tùy chọn - có thể bỏ) =====
         setOnKeyPressed(event -> {
-            double step = 10; // Tốc độ mỗi lần nhấn
+            double step = 10;
 
             switch (event.getCode()) {
-                case LEFT:  // Lùi xa
+                case LEFT:
                     player.setLayoutX(player.getLayoutX() - step);
                     break;
-                case RIGHT: // Tiến gần
+                case RIGHT:
                     player.setLayoutX(player.getLayoutX() + step);
                     break;
                 default:
                     break;
             }
 
-            // Thanh máu player di chuyển theo nhân vật
             playerBar.setLayoutX(player.getLayoutX() + 70);
         });
 
-        // Cho phép Pane nhận sự kiện phím
         setFocusTraversable(true);
-        requestFocus(); // Tập trung ngay khi vào trận
+        requestFocus();
     }
 
-    // Random enemy mỗi trận
     private String randomEnemy() {
         Random r = new Random();
         return ENEMY_LIST.get(r.nextInt(ENEMY_LIST.size()));
     }
 
-    // ===== GETTER CHO CÁC CLASS KHÁC DÙNG =====
+    // ===== GETTER =====
     public ImageView getPlayerView() {
         return player;
     }
@@ -136,47 +120,13 @@ public class ArenaView extends Pane {
         return enemyBar;
     }
 
-    // ===== QUẢN LÝ LƯỢT =====
-    public boolean isPlayerTurn() {
-        return currentTurn == Turn.PLAYER;
-    }
-
-    public void endPlayerTurn() {
-        currentTurn = Turn.AI;
-    }
-
-    public void endAITurn() {
-        currentTurn = Turn.PLAYER;
-    }
-
-    public void startPlayerTurn() {
-        currentTurn = Turn.PLAYER;
-    }
-
-    // ===== GAME OVER =====
-    public boolean isGameOver() {
-        return gameOver;
-    }
-
-    public void setGameOver(boolean value) {
-        gameOver = value;
-
-        if (value && controller != null) {
-            // Kiểm tra ai thắng dựa vào HP
-            boolean playerWon = enemyBar.getCurrentHp() <= 0;
-            controller.onGameOver(playerWon);
-        }
-    }
-
-    // ===== ĐẶT VỊ TRÍ BAN ĐẦU (CÓ KHOẢNG CÁCH) =====
+    // ===== ĐẶT VỊ TRÍ BAN ĐẦU =====
     public void setupInitialDistance() {
         MovementController.moveTo(enemy, 220, () -> {
-            // ✅ Callback: cập nhật thanh máu SAU KHI animation xong
             enemyBar.setLayoutX(enemy.getLayoutX() + 70);
         });
 
         MovementController.moveTo(player, 1300 - 220 - 250, () -> {
-            // ✅ Callback: cập nhật thanh máu SAU KHI animation xong
             playerBar.setLayoutX(player.getLayoutX() + 70);
         });
     }

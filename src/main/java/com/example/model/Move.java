@@ -3,23 +3,20 @@ package com.example.model;
 public class Move {
     public final String name;
     public final int damage;
-    public final int time;
+    public final int turn; // ✓ Đổi từ time → turn
 
-    public Move(String name, int damage, int time) {
+    public Move(String name, int damage, int turn) {
         this.name = name;
         this.damage = damage;
-        this.time = time;
+        this.turn = turn;
     }
 
     public String getName() { return name; }
+    public int getDamage() { return damage; }
+    public int getTurn() { return turn; }
 
-    public int getDamage() {
-        return damage;
+    @Override
+    public String toString() {
+        return name + " (dmg=" + damage + ", turn=" + turn + ")";
     }
-
-    public int getTime() {
-        return time;
-    }
-
-    @Override public String toString() { return name + " (dmg=" + damage + ")"; }
 }

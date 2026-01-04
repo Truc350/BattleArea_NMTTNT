@@ -1,11 +1,13 @@
 package com.example.view;
 
+import com.example.model.Hero;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 
 public class HealthBar extends Pane {
+
 
     public enum Align {
         LEFT, RIGHT
@@ -131,4 +133,13 @@ public class HealthBar extends Pane {
     public void heal(int amount) {
         setHp(currentHp + amount);
     }
+    /**
+     * Đồng bộ HP/MP từ Hero model
+     * Gọi sau mỗi lần Hero thay đổi trạng thái
+     */
+    public void syncWithHero(Hero hero) {
+        setHp(hero.getHp());
+        setMp(hero.getMp());
+    }
+
 }

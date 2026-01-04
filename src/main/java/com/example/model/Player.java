@@ -21,10 +21,10 @@ public class Player {
     public void selectPlayerHero(Point position) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("\n=== CHỌN TƯỚNG CHO NGƯỜI CHƠI ===");
-        System.out.println("1. Fighter (Chiến binh - Attack 20, Defense 15)");
-        System.out.println("2. Marksman (Xạ thủ - Attack 25, chí mạng cao)");
-        System.out.println("3. Mage (Pháp sư - Attack 18, MP mạnh)");
-        System.out.println("4. Support (Hỗ trợ - Heal tốt, Defense 12)");
+        System.out.println("1. Fighter (Chiến binh - Attack 8, Defense 10)");
+        System.out.println("2. Marksman (Xạ thủ - Attack 10, Defense 5, Crit 30%)");
+        System.out.println("3. Mage (Pháp sư - Attack 5, MP 100)");
+        System.out.println("4. Support (Hỗ trợ - Attack 5, Defense 15, Heal)");
         System.out.print("Nhập lựa chọn (1-4): ");
         int choice = 0;
         while (choice < 1 || choice > 4) {
