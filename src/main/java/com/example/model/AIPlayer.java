@@ -276,6 +276,10 @@ public class AIPlayer extends Hero {
 
         copy.setHp(original.getHp());
         copy.setMp(original.getMp());
+        copy.setDefense(original.getDefense());
+        copy.setDefending(original.isDefending());
+
+
         copy.getSkills().clear();
 
         for (Skill sk : original.getSkills()) {
