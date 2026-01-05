@@ -7,6 +7,8 @@ import com.example.view.PlayerSkillBar;
 import com.example.view.SkillEffect;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
@@ -22,7 +24,6 @@ public class BattleController {
     private int currentTurn = 1;
 
     private String characterPath;
-    private String enemyCharacterPath;
 
     private static final double UI_TO_MODEL_SCALE = 50.0;
 
@@ -78,8 +79,6 @@ public class BattleController {
         }
 
         game = new Game(player, aiPlayer);
-        enemyCharacterPath = getEnemyPathFromType(aiType);
-        System.out.println("   Enemy Character Path: " + enemyCharacterPath);
 
         System.out.println("🎮 Game initialized");
     }
@@ -106,15 +105,6 @@ public class BattleController {
         }
 
         return Hero.getHero(type, name, position);
-    }
-
-    private String getEnemyPathFromType(HeroType type) {
-        return switch (type) {
-            case FIGHTER -> "/img/character/dausi_trai.png";
-            case MAGE -> "/img/character/phap_su_trai.png";
-            case MARKSMAN -> "/img/character/xathu.png";
-            case SUPPORT -> "/img/character/trothu_trai.png";
-        };
     }
 
     // =====================================================
@@ -519,6 +509,38 @@ public class BattleController {
         updateCooldowns();
     }
 
+    private String getEnemyImagePath() {
+        // Lấy ImageView của enemy từ ArenaView
+        ImageView enemyView = arena.getEnemyView();
+
+        // Lấy URL của ảnh hiện tại
+        Image image = enemyView.getImage();
+        if (image != null) {
+            String url = image.getUrl();
+
+            // Chuyển từ file://.../xathu.png -> /img/character/xathu.png
+            if (url != null && url.contains("/img/character/")) {
+                int startIndex = url.indexOf("/img/character/");
+                return url.substring(startIndex);
+            }
+        }
+
+        // Fallback: dùng enemy name để đoán
+        String enemyName = aiPlayer.getName().toLowerCase();
+        if (enemyName.contains("fighter")) {
+            return "/img/character/dausi_trai.png";
+        } else if (enemyName.contains("mage")) {
+            return "/img/character/phap_su_trai.png";
+        } else if (enemyName.contains("marksman")) {
+            return "/img/character/xathu.png";
+        } else if (enemyName.contains("support")) {
+            return "/img/character/trothu_trai.png";
+        }
+
+        return "/img/character/dausi_trai.png"; // Default
+    }
+
+
     private boolean checkGameOver() {
         boolean gameOver = false;
         boolean playerWin = false;
@@ -539,10 +561,11 @@ public class BattleController {
 
         // ✅ LƯU LỊCH SỬ KHI GAME OVER
         if (gameOver) {
+            String enemyPath = getEnemyImagePath();
             MatchHistory match = new MatchHistory(
                     playerWin,
                     characterPath,
-                    enemyCharacterPath,
+                    enemyPath,
                     LocalDateTime.now(),
                     player.getHero().getName(),
                     aiPlayer.getName(),
