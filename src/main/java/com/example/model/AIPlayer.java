@@ -1,5 +1,9 @@
 package com.example.model;
 
+import javafx.animation.PauseTransition;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -324,8 +328,13 @@ public class AIPlayer extends Hero {
 
         copy.setHp(original.getHp());
         copy.setMp(original.getMp());
+
         copy.setDefense(original.getDefense());
-        copy.setDefending(original.isDefending());
+        if (original.isDefending()){
+            copy.setDefending(true);
+        }
+        copy.setAttackRange(original.getAttackRange());
+//        copy.setDefending(original.isDefending());
 
         copy.getSkills().clear();
 
@@ -359,4 +368,5 @@ public class AIPlayer extends Hero {
             }
         }
     }
+
 }
