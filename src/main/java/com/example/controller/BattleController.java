@@ -7,8 +7,6 @@ import com.example.view.PlayerSkillBar;
 import com.example.view.SkillEffect;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -25,7 +23,6 @@ public class BattleController {
     private int currentTurn = 1;
 
     private String characterPath;
-    private String enemyCharacterPath;
 
     private static final double UI_TO_MODEL_SCALE = 50.0;
     private static final double MOVE_STEP = 30.0;
@@ -93,8 +90,6 @@ public class BattleController {
         HeroType aiType = HeroType.values()[(int)(Math.random() * 4)];
         Hero aiHeroTemplate = Hero.getHero(aiType, "AI", aiPos);
 
-        enemyCharacterPath = getEnemyPathFromType(aiType);
-
         aiPlayer = new AIPlayer(
                 aiHeroTemplate.getName(),
                 aiHeroTemplate.getMaxHP(),
@@ -119,6 +114,7 @@ public class BattleController {
         }
 
         game = new Game(player, aiPlayer);
+        enemyCharacterPath = getEnemyPathFromType(aiType);
     }
 
     private Hero createHeroFromPath(String path, Point position) {
@@ -143,15 +139,6 @@ public class BattleController {
         }
 
         return Hero.getHero(type, name, position);
-    }
-
-    private String getEnemyPathFromType(HeroType type) {
-        return switch (type) {
-            case FIGHTER -> "/img/character/dausi_trai.png";
-            case MAGE -> "/img/character/phap_su_trai.png";
-            case MARKSMAN -> "/img/character/xathu.png";
-            case SUPPORT -> "/img/character/trothu_trai.png";
-        };
     }
 
     // =====================================================
@@ -609,11 +596,11 @@ public class BattleController {
         }
 
         if (gameOver) {
-//            String enemyPath = getEnemyImagePath();
+            String enemyPath = getEnemyImagePath();
             MatchHistory match = new MatchHistory(
                     playerWin,
                     characterPath,
-                    enemyCharacterPath,
+                    enemyPath,
                     LocalDateTime.now(),
                     player.getHero().getName(),
                     aiPlayer.getName(),
