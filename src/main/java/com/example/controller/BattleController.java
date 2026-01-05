@@ -40,7 +40,7 @@ public class BattleController {
     }
 
     // =====================================================
-    // GAME INITIALIZATION (giữ nguyên)
+    // GAME INITIALIZATION
     // =====================================================
     private void initializeGame() {
         double playerUIX = 960.0;
@@ -82,14 +82,6 @@ public class BattleController {
         System.out.println("   Enemy Character Path: " + enemyCharacterPath);
 
         System.out.println("🎮 Game initialized");
-    }
-
-    private String getHeroTypeName(Hero hero) {
-        if (hero instanceof Fighter) return "Fighter";
-        if (hero instanceof Marksman) return "Marksman";
-        if (hero instanceof Mage) return "Mage";
-        if (hero instanceof Support) return "Support";
-        return "Unknown";
     }
 
     private Hero createHeroFromPath(String path, Point position) {
@@ -177,6 +169,7 @@ public class BattleController {
             return;
         }
 
+        // ✅ KHÓA NGAY KHI BẮT ĐẦU HÀNH ĐỘNG
         skillBar.disableAllButtons();
 
         double startX = arena.getPlayerView().getLayoutX() + 50;
@@ -275,10 +268,8 @@ public class BattleController {
             syncHealthBars();
             updateCooldowns();
 
-            // ✅ Disable nút HEAL để không spam
             skillBar.disableHealButton();
 
-            // Hiện thông báo
             showMessage("HEAL! (+10 HP, +15 MP)", Color.GREEN);
 
             // ✅ KHÔNG endPlayerTurn() - người chơi tiếp tục đánh!
@@ -301,7 +292,6 @@ public class BattleController {
             return;
         }
 
-        // ✅ Kích hoạt phòng thủ trong Hero
         hero.setDefending(true);
         isDefending = true;
 
@@ -309,13 +299,9 @@ public class BattleController {
         System.out.println("   → Defense tăng gấp đôi!");
         System.out.println("   → Bạn vẫn có thể đánh tiếp!");
 
-        // Visual effect
         showMessage("PHÒNG THỦ KÍCH HOẠT!", Color.PURPLE);
 
-        // ✅ Disable nút DEFEND để không spam
         skillBar.disableDefendButton();
-
-        // ✅ KHÔNG endPlayerTurn() - người chơi tiếp tục đánh!
     }
 
     private void executePlayerSkill(String skillName, String imagePath, String explosionPath, int explosionSize) {
@@ -341,6 +327,7 @@ public class BattleController {
             return;
         }
 
+        // ✅ KHÓA NGAY KHI BẮT ĐẦU HÀNH ĐỘNG
         skillBar.disableAllButtons();
 
         double startX = arena.getPlayerView().getLayoutX() + 50;
@@ -403,7 +390,11 @@ public class BattleController {
 
         updateCooldowns();
 
+        // ✅ KHÓA TẤT CẢ SKILL KHI ĐẾN LƯỢT AI
+        skillBar.disableAllButtons();
+
         System.out.println("📍 Kết thúc lượt Player. Turn hiện tại: " + currentTurn);
+        System.out.println("🔒 Đã khóa tất cả skill của Player - Đến lượt AI");
 
         PauseTransition delay = new PauseTransition(Duration.seconds(1));
         delay.setOnFinished(e -> executeAITurn());
@@ -470,14 +461,12 @@ public class BattleController {
     private void handleAISkill(String skillName) {
         System.out.println("   → AI đang thực hiện skill: " + skillName);
 
-        // ✅ Kiểm tra tầm đánh TRƯỚC
         if (!game.isAIInRange()) {
             System.err.println("   ❌ AI ngoài tầm! Distance: " + game.getDistance());
             endAITurn();
             return;
         }
 
-        // ✅ Skill được execute - Hero tự động tính defense
         boolean success = aiPlayer.useSkill(skillName, currentTurn, player.getHero());
 
         if (!success) {
@@ -523,7 +512,9 @@ public class BattleController {
 
         System.out.println("📍 Kết thúc lượt AI. Turn hiện tại: " + currentTurn);
         System.out.println("   Distance: " + game.getDistance());
+        System.out.println("🔓 Mở khóa tất cả skill cho Player - Đến lượt Player");
 
+        // ✅ MỞ KHÓA TẤT CẢ SKILL KHI ĐẾN LƯỢT PLAYER
         skillBar.enableAllButtons();
         updateCooldowns();
     }

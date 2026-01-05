@@ -187,7 +187,7 @@ public abstract class Hero {
                 maxMP = 80;
                 attack = 15;
                 defense = 12;
-                attackRange = 4.0;
+                attackRange = 8.0;
                 break;
 
             case MARKSMAN:
@@ -195,7 +195,7 @@ public abstract class Hero {
                 maxMP = 90;
                 attack = 18;
                 defense = 6;
-                attackRange = 8.0;
+                attackRange = 12.0;
                 break;
 
             case MAGE:
@@ -203,7 +203,7 @@ public abstract class Hero {
                 maxMP = 100;
                 attack = 12;
                 defense = 7;
-                attackRange = 7.0;
+                attackRange = 10.0;
                 break;
 
             case SUPPORT:
@@ -211,7 +211,7 @@ public abstract class Hero {
                 maxMP = 100;
                 attack = 10;
                 defense = 15;
-                attackRange = 6.0;
+                attackRange = 10.0;
                 break;
         }
 
