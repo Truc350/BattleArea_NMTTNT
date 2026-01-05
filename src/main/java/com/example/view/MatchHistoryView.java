@@ -1,5 +1,7 @@
 package com.example.view;
 
+import com.example.manager.MatchHistoryManager;
+import com.example.model.MatchHistory;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,6 +17,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 
 import java.net.URL;
+import java.util.List;
 
 public class MatchHistoryView {
     public Scene getScene(Stage stage) {
@@ -30,32 +33,53 @@ public class MatchHistoryView {
                 """);
         title.setEffect(new DropShadow(10, Color.BLACK));
 
+        // Thống kê
+        MatchHistoryManager manager = MatchHistoryManager.getInstance();
+        Label statsLabel = new Label(String.format("Tổng: %d trận | Thắng: %d | Thua: %d",
+                manager.getTotalMatches(), manager.getWins(), manager.getLosses()));
+        statsLabel.setStyle("""
+                -fx-font-size: 18px;
+                -fx-font-weight: bold;
+                -fx-text-fill: #ECF0F1;
+                """);
+        statsLabel.setEffect(new DropShadow(5, Color.BLACK));
+
         // Container cho danh sách trận đấu
         VBox matchList = new VBox(15);
         matchList.setAlignment(Pos.TOP_CENTER);
         matchList.setPadding(new Insets(20));
 
-        // Thêm dữ liệu mẫu (sau này thay bằng dữ liệu thật)
-        matchList.getChildren().addAll(
-                createMatchRow(true, "/img/character/dausi_phai.png", "24/12 20:56"),
-                createMatchRow(true, "/img/character/trothu_phai.png", "06/10 08:53"),
-                createMatchRow(false, "/img/character/dausi_phai.png", "21/09 15:01"),
-                createMatchRow(true, "/img/character/dausi_phai.png", "20/09 16:41"),
-                createMatchRow(false, "/img/character/dausi_phai.png", "19/09 14:22")
-        );
+        // Lay DL that
+        List<MatchHistory> matches = manager.getAllMatches();
+
+        if(matches.isEmpty()){
+            Label emptyLabel = new Label("Chưa có trận đấu nào\n\nHãy bắt đầu một trận đấu!");
+            emptyLabel.setStyle("""
+                    -fx-font-size: 24px;
+                    -fx-text-fill: #BDC3C7;
+                    -fx-text-alignment: center;
+                    """);
+            emptyLabel.setEffect(new DropShadow(5, Color.BLACK));
+            matchList.getChildren().add(emptyLabel);
+        } else {
+            // Thêm các trận đấu thật
+            for (MatchHistory match : matches) {
+                matchList.getChildren().add(createMatchRow(match));
+            }
+        }
 
         // ScrollPane để cuộn danh sách
         ScrollPane scrollPane = new ScrollPane(matchList);
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
-        scrollPane.setPrefHeight(500);
-        scrollPane.setMaxHeight(500);
+        scrollPane.setPrefHeight(450);
+        scrollPane.setMaxHeight(450);
 
         // Layout chính
-        VBox contentBox = new VBox(30);
+        VBox contentBox = new VBox(20);
         contentBox.setAlignment(Pos.TOP_CENTER);
         contentBox.setPadding(new Insets(60, 50, 30, 50));
-        contentBox.getChildren().addAll(title, scrollPane);
+        contentBox.getChildren().addAll(title, statsLabel, scrollPane);
 
         // StackPane để đặt nút ở góc
         StackPane mainLayout = new StackPane();
@@ -88,7 +112,7 @@ public class MatchHistoryView {
     }
 
     // Tạo 1 hàng trận đấu
-    private HBox createMatchRow(boolean isVictory, String characterPath, String matchTime) {
+    private HBox createMatchRow(MatchHistory match) {
         HBox row = new HBox(30);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(15, 30, 15, 30));
@@ -104,7 +128,7 @@ public class MatchHistoryView {
         row.setEffect(new DropShadow(8, Color.BLACK));
 
         // Hình nhân vật
-        URL imgUrl = getClass().getResource(characterPath);
+        URL imgUrl = getClass().getResource(match.getCharacterPath());
         ImageView characterImg = new ImageView();
         if (imgUrl != null) {
             characterImg.setImage(new Image(imgUrl.toExternalForm()));
@@ -125,8 +149,8 @@ public class MatchHistoryView {
         imgFrame.setPadding(new Insets(5));
 
         // Kết quả VICTORY/DEFEAT
-        Label resultLabel = new Label(isVictory ? "VICTORY" : "DEFEAT");
-        if (isVictory) {
+        Label resultLabel = new Label(match.isVictory() ? "VICTORY" : "DEFEAT");
+        if (match.isVictory()) {
             resultLabel.setStyle("""
                     -fx-font-size: 28px;
                     -fx-font-weight: bold;
@@ -146,26 +170,33 @@ public class MatchHistoryView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Thời gian
-        VBox timeBox = new VBox(5);
-        timeBox.setAlignment(Pos.CENTER_RIGHT);
+        // Thong tin chi tiet
+        VBox inforBox = new VBox(5);
+        inforBox.setAlignment(Pos.CENTER_RIGHT);
 
-        Label timeTitle = new Label("Đấu hạng");
-        timeTitle.setStyle("""
+        Label modelLabel = new Label("Đấu hạng");
+        modelLabel.setStyle("""
                 -fx-font-size: 14px;
                 -fx-text-fill: #BDC3C7;
                 """);
 
-        Label timeLabel = new Label(matchTime);
+        Label timeLabel = new Label(match.getFormattedTime());
         timeLabel.setStyle("""
                 -fx-font-size: 16px;
                 -fx-font-weight: bold;
                 -fx-text-fill: white;
                 """);
 
-        timeBox.getChildren().addAll(timeTitle, timeLabel);
+        Label hpLabel = new Label(String.format("HP: %d vs %d",
+                match.getPlayerFinalHP(), match.getEnemyFinalHP()));
+        hpLabel.setStyle("""
+                -fx-font-size: 13px;
+                -fx-text-fill: #95A5A6;
+                """);
 
-        row.getChildren().addAll(imgFrame, resultLabel, spacer, timeBox);
+        inforBox.getChildren().addAll(modelLabel, timeLabel, hpLabel);
+
+        row.getChildren().addAll(imgFrame, resultLabel, spacer, inforBox);
 
         // Hover effect
         row.setOnMouseEntered(e -> {

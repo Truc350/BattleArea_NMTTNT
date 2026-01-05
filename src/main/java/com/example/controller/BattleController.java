@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.manager.MatchHistoryManager;
 import com.example.model.*;
 import com.example.view.ArenaView;
 import com.example.view.PlayerSkillBar;
@@ -8,6 +9,8 @@ import javafx.animation.PauseTransition;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+
+import java.time.LocalDateTime;
 
 public class BattleController {
     private ArenaView arena;
@@ -514,21 +517,42 @@ public class BattleController {
     }
 
     private boolean checkGameOver() {
+        boolean gameOver = false;
+        boolean playerWin = false;
+
         if (player.getHero().getHp() <= 0) {
             System.out.println("\n💀 GAME OVER - AI WINS!");
             skillBar.disableAllButtons();
             skillBar.showGameOver("YOU LOSE!");
-            return true;
-        }
-
-        if (aiPlayer.getHp() <= 0) {
+            gameOver = true;
+            playerWin = false;
+        } else if (aiPlayer.getHp() <= 0) {
             System.out.println("\n🎉 GAME OVER - PLAYER WINS!");
             skillBar.disableAllButtons();
             skillBar.showGameOver("YOU WIN!");
-            return true;
+            gameOver = true;
+            playerWin = true;
         }
 
-        return false;
+        // ✅ LƯU LỊCH SỬ KHI GAME OVER
+        if (gameOver) {
+            MatchHistory match = new MatchHistory(
+                    playerWin,
+                    characterPath,
+                    LocalDateTime.now(),
+                    player.getHero().getName(),
+                    aiPlayer.getName(),
+                    Math.max(0, player.getHero().getHp()),
+                    Math.max(0, aiPlayer.getHp())
+            );
+
+            MatchHistoryManager.getInstance().addMatch(match);
+
+            System.out.println("📜 Lịch sử đã được lưu: " +
+                    (playerWin ? "THẮNG" : "THUA"));
+        }
+
+        return gameOver;
     }
 
     public void setSkillBar(PlayerSkillBar skillBar) {
