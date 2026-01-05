@@ -88,7 +88,9 @@ public class BattleController {
         Hero playerHero = createHeroFromPath(characterPath, playerPos);
         player = new Player(playerHero);
 
-        HeroType aiType = HeroType.values()[(int)(Math.random() * 4)];
+        enemyCharacterPath = arena.getEnemyImagePath();
+
+        HeroType aiType = getEnemyPathFromPath(enemyCharacterPath);
         Hero aiHeroTemplate = Hero.getHero(aiType, "AI", aiPos);
 
         aiPlayer = new AIPlayer(
@@ -115,7 +117,19 @@ public class BattleController {
         }
 
         game = new Game(player, aiPlayer);
-        enemyCharacterPath = getEnemyPathFromType(aiType);
+    }
+
+    private HeroType getEnemyPathFromPath(String path) {
+        if (path.contains("dausi")) {
+            return HeroType.FIGHTER;
+        } else if (path.contains("phap_su")) {
+            return HeroType.MAGE;
+        } else if (path.contains("xathu")) {
+            return HeroType.MARKSMAN;
+        } else if (path.contains("trothu")) {
+            return HeroType.SUPPORT;
+        }
+        return HeroType.FIGHTER; // default
     }
 
     private Hero createHeroFromPath(String path, Point position) {
@@ -140,15 +154,6 @@ public class BattleController {
         }
 
         return Hero.getHero(type, name, position);
-    }
-
-    private String getEnemyPathFromType(HeroType type) {
-        return switch (type) {
-            case FIGHTER -> "/img/character/dausi_trai.png";
-            case MAGE -> "/img/character/phap_su_trai.png";
-            case MARKSMAN -> "/img/character/xathu.png";
-            case SUPPORT -> "/img/character/trothu_trai.png";
-        };
     }
 
     // =====================================================
@@ -389,6 +394,8 @@ public class BattleController {
     private void executeAITurn() {
         syncPositionsToModel();
 
+        aiPlayer.resetTurnState();
+
         String action = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
 
         if (action.equals("Mana Regen")) {
@@ -477,14 +484,16 @@ public class BattleController {
 
             PauseTransition delay = new PauseTransition(Duration.seconds(0.5));
             delay.setOnFinished(e -> {
-                String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+                // Sau khi heal, AI tiếp tục chọn action để tấn công
+                String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game, true);
 
-                if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
-                        !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
-                    handleAISkill(nextAction);
-                } else {
-                    endAITurn();
-                }
+//                if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
+//                        !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
+//                    handleAISkill(nextAction);
+//                } else {
+//                    endAITurn();
+//                }
+                handleAISkill(nextAction);
             });
             delay.play();
         } else {
@@ -499,14 +508,15 @@ public class BattleController {
 
         PauseTransition delay = new PauseTransition(Duration.seconds(0.5));
         delay.setOnFinished(e -> {
-            String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+            String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game, true);
 
-            if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
-                    !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
-                handleAISkill(nextAction);
-            } else {
-                endAITurn();
-            }
+//            if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
+//                    !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
+//                handleAISkill(nextAction);
+//            } else {
+//                endAITurn();
+//            }
+            handleAISkill(nextAction);
         });
         delay.play();
     }
