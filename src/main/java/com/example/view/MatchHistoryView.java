@@ -129,9 +129,23 @@ public class MatchHistoryView {
                 """);
         row.setEffect(new DropShadow(8, Color.BLACK));
 
+        //
+        VBox playerBox = new VBox(5);
+        playerBox.setAlignment(Pos.CENTER);
+
+        Label playerLabel = new Label("PLAYER");
+        playerLabel.setStyle("""
+                -fx-font-size: 12px;
+                -fx-font-weight: bold;
+                -fx-text-fill: #3498db;
+                """);
+        playerLabel.setEffect(new DropShadow(3, Color.BLACK));
+
         // ===== 1. PLAYER IMAGE =====
         ImageView playerImg = createCharacterImage(match.getCharacterPath(), 60);
         StackPane playerFrame = createImageFrame(playerImg);
+
+        playerBox.getChildren().addAll(playerLabel, playerFrame);
 
         // ===== 2. VS LABEL =====
         Label vsLabel = new Label("VS");
@@ -143,8 +157,21 @@ public class MatchHistoryView {
         vsLabel.setEffect(new DropShadow(5, Color.BLACK));
 
         // ===== 3. AI IMAGE =====
+        VBox aiBox = new VBox(5);
+        aiBox.setAlignment(Pos.CENTER);
+
+        Label aiLabel = new Label("AI");
+        aiLabel.setStyle("""
+                -fx-font-size: 12px;
+                -fx-font-weight: bold;
+                -fx-text-fill: #e74c3c;
+                """);
+        aiLabel.setEffect(new DropShadow(3, Color.BLACK));
+
         ImageView aiImg = createCharacterImage(match.getEnemyCharacterPath(), 60);
         StackPane aiFrame = createImageFrame(aiImg);
+
+        aiBox.getChildren().addAll(aiLabel, aiFrame);
 
         // ===== 4. NGƯỜI THẮNG =====
         VBox winnerBox = new VBox(3);
@@ -205,7 +232,7 @@ public class MatchHistoryView {
 
         inforBox.getChildren().addAll(modelLabel, timeLabel, hpLabel);
 
-        row.getChildren().addAll(playerFrame, vsLabel, aiFrame, winnerBox, spacer, inforBox);
+        row.getChildren().addAll(playerBox, vsLabel, aiBox, winnerBox, spacer, inforBox);
 
         // Hover effect
         row.setOnMouseEntered(e -> {

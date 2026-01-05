@@ -7,6 +7,8 @@ import com.example.view.PlayerSkillBar;
 import com.example.view.SkillEffect;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -91,6 +93,8 @@ public class BattleController {
         HeroType aiType = HeroType.values()[(int)(Math.random() * 4)];
         Hero aiHeroTemplate = Hero.getHero(aiType, "AI", aiPos);
 
+        enemyCharacterPath = getEnemyPathFromType(aiType);
+
         aiPlayer = new AIPlayer(
                 aiHeroTemplate.getName(),
                 aiHeroTemplate.getMaxHP(),
@@ -115,7 +119,6 @@ public class BattleController {
         }
 
         game = new Game(player, aiPlayer);
-        enemyCharacterPath = getEnemyPathFromType(aiType);
     }
 
     private Hero createHeroFromPath(String path, Point position) {
@@ -557,6 +560,38 @@ public class BattleController {
         updateCooldowns();
     }
 
+    private String getEnemyImagePath() {
+        // Lấy ImageView của enemy từ ArenaView
+        ImageView enemyView = arena.getEnemyView();
+
+        // Lấy URL của ảnh hiện tại
+        Image image = enemyView.getImage();
+        if (image != null) {
+            String url = image.getUrl();
+
+            // Chuyển từ file://.../xathu.png -> /img/character/xathu.png
+            if (url != null && url.contains("/img/character/")) {
+                int startIndex = url.indexOf("/img/character/");
+                return url.substring(startIndex);
+            }
+        }
+
+        // Fallback: dùng enemy name để đoán
+        String enemyName = aiPlayer.getName().toLowerCase();
+        if (enemyName.contains("fighter")) {
+            return "/img/character/dausi_trai.png";
+        } else if (enemyName.contains("mage")) {
+            return "/img/character/phap_su_trai.png";
+        } else if (enemyName.contains("marksman")) {
+            return "/img/character/xathu.png";
+        } else if (enemyName.contains("support")) {
+            return "/img/character/trothu_trai.png";
+        }
+
+        return "/img/character/dausi_trai.png"; // Default
+    }
+
+
     private boolean checkGameOver() {
         boolean gameOver = false;
         boolean playerWin = false;
@@ -574,6 +609,7 @@ public class BattleController {
         }
 
         if (gameOver) {
+//            String enemyPath = getEnemyImagePath();
             MatchHistory match = new MatchHistory(
                     playerWin,
                     characterPath,
