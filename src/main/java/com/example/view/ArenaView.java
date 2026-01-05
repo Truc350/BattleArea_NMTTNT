@@ -24,6 +24,7 @@ public class ArenaView extends Pane {
     private HealthBar playerBar;   // Thanh HP/MP người chơi
     private HealthBar enemyBar;    // Thanh HP/MP AI
     private GameController controller;  // Tham chiếu đến controller chính
+    private String enemyPath;
 
     public ArenaView(String arenaPath, String playerPath) {
         this.controller = GameController.getInstance();
@@ -36,7 +37,7 @@ public class ArenaView extends Pane {
         bg.setFitHeight(700);
 
         // Tạo enemy random bên trái
-        String enemyPath = randomEnemy();
+        enemyPath = randomEnemy();
         enemy = new ImageView(new Image(getClass().getResourceAsStream(enemyPath)));
 
         if (enemyPath.contains("/img/character/trothu_trai.png")) {
@@ -76,7 +77,7 @@ public class ArenaView extends Pane {
 
         getChildren().addAll(bg, enemy, player, enemyBar, playerBar);
 
-        // ===== DI CHUYỂN BẰNG PHÍM MŨI TÊN (tùy chọn - có thể bỏ) =====
+        // ===== DI CHUYỂN BẰNG PHÍM MŨI TÊN =====
         setOnKeyPressed(event -> {
             double step = 10;
 
@@ -129,5 +130,9 @@ public class ArenaView extends Pane {
         MovementController.moveTo(player, 1300 - 220 - 250, () -> {
             playerBar.setLayoutX(player.getLayoutX() + 70);
         });
+    }
+
+    public String getEnemyImagePath() {
+        return enemyPath;
     }
 }

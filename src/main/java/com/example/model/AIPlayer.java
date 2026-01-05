@@ -29,28 +29,43 @@ public class AIPlayer extends Hero {
     }
 
     public String chooseBestAction(int currentTurn, Hero opponent, Game game) {
+        return chooseBestAction(currentTurn, opponent, game, false);
+    }
+
+
+    public String chooseBestAction(int currentTurn, Hero opponent, Game game, boolean forceAttack) {
         double distance = this.getPosition().distanceTo(opponent.getPosition());
         double myRange = this.getAttackRange();
 
-        if (shouldHeal() && !usedHealThisTurn) {
-            usedHealThisTurn = true;
-            return "Mana Regen";
+        if(!forceAttack) {
+            if (shouldHeal() && !usedHealThisTurn) {
+                usedHealThisTurn = true;
+                return "Mana Regen";
+            }
+
+            if (shouldDefend(opponent, distance) && !usedDefendThisTurn) {
+                usedDefendThisTurn = true;
+                this.setDefending(true);
+                return "Defend";
+            }
+
+            // Nếu ngoài tầm, chọn di chuyển
+            if (distance > myRange) {
+                return chooseMovementStrategy(opponent, distance);
+            }
         }
 
-        if (shouldDefend(opponent, distance) && !usedDefendThisTurn) {
-            usedDefendThisTurn = true;
-            this.setDefending(true);
-            return "Defend";
-        }
-
-        if (distance > myRange) {
-            return chooseMovementStrategy(opponent, distance);
-        }
-
+        // Nếu forceAttack = true và ngoài tầm, return Basic Attack (sẽ fail nhưng không sao)
+        // Nếu trong tầm, chọn skill tốt nhất bằng minimax
         transpositionTable.clear();
 
         GameState root = new GameState(deepCopy(this), deepCopy(opponent), currentTurn);
-        List<GameState> children = generateSuccessors(root, true);
+
+        List<GameState> children = forceAttack ? generateSuccessorsAttackOnly(root, true) : generateSuccessors(root, true);
+
+        if (children.isEmpty()) {
+            return "Basic Attack";
+        }
 
         int bestScore = Integer.MIN_VALUE;
         Move bestMove = null;
@@ -63,7 +78,48 @@ public class AIPlayer extends Hero {
             }
         }
 
-        return bestMove.getName();
+        return bestMove != null ? bestMove.getName() : "Basic Attack";
+    }
+
+    // Generate successors chỉ cho skills tấn công (không có Heal/Defend/Move)
+    private List<GameState> generateSuccessorsAttackOnly(GameState state, boolean maxPlayer) {
+        List<GameState> successors = new ArrayList<>();
+        Hero current = maxPlayer ? state.aiHero : state.playerHero;
+        Hero target = maxPlayer ? state.playerHero : state.aiHero;
+        int nextTurn = state.turn + 1;
+
+        Hero aiBase = deepCopy(state.aiHero);
+        Hero plBase = deepCopy(state.playerHero);
+
+        // Chỉ generate attack skills
+        for (Skill skill : current.getSkills()) {
+            if (!skill.getName().equals("Mana Regen") &&
+                    skill.canUse(state.turn, current.getMp())) {
+
+                Hero aiCopy = deepCopy(aiBase);
+                Hero plCopy = deepCopy(plBase);
+                Hero user = maxPlayer ? aiCopy : plCopy;
+                Hero targ = maxPlayer ? plCopy : aiCopy;
+
+                int expectedDamage = skill.getDamage();
+
+                if (user instanceof Marksman) {
+                    expectedDamage = (int)(expectedDamage * 1.3);
+                }
+
+                if (user.useSkillDeterministic(skill.getName(), state.turn, targ, expectedDamage)) {
+                    successors.add(new GameState(aiCopy, plCopy, nextTurn,
+                            new Move(skill.getName(), expectedDamage, nextTurn)));
+                }
+            }
+        }
+
+        if (maxPlayer) {
+            successors.sort((a, b) -> Integer.compare(b.getMove().getDamage(),
+                    a.getMove().getDamage()));
+        }
+
+        return successors;
     }
 
     private boolean shouldHeal() {
