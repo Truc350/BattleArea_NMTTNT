@@ -10,8 +10,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 public class PlayerSkillBar extends Pane {
@@ -20,6 +18,9 @@ public class PlayerSkillBar extends Pane {
     private final BattleController battleController;
 
     private SkillButton A1, A2, A3, DEF, HEAL, ATK;
+
+    // ✅ THÊM: Biến theo dõi trạng thái enabled/disabled
+    private boolean buttonsEnabled = true;
 
     public PlayerSkillBar(ArenaView arena, BattleController battleController) {
         this.arena = arena;
@@ -70,14 +71,6 @@ public class PlayerSkillBar extends Pane {
     // =====================================================
     // CẬP NHẬT COOLDOWN TỪ MODEL
     // =====================================================
-    /**
-     * Cập nhật cooldown của các skill
-     * @param cd1 Cooldown skill A1 (còn lại bao nhiêu turn)
-     * @param cd2 Cooldown skill A2
-     * @param cd3 Cooldown skill A3
-     * @param cdHeal Cooldown Heal
-     * @param cdDef Cooldown Defend
-     */
     public void updateCooldowns(int cd1, int cd2, int cd3, int cdHeal, int cdDef) {
         System.out.println("   [SkillBar] Update CD - A1:" + cd1 + " A2:" + cd2 + " A3:" + cd3);
         // Disable/Enable buttons
@@ -102,10 +95,12 @@ public class PlayerSkillBar extends Pane {
         drawOverlay(DEF.getOverlay(), cdDef > 0);
     }
 
-    /**
-     * Disable tất cả buttons (khi game over hoặc không phải lượt player)
-     */
+    // =====================================================
+    // ENABLE/DISABLE BUTTONS
+    // =====================================================
     public void disableAllButtons() {
+        buttonsEnabled = false; // ✅ Cập nhật trạng thái
+
         ATK.getButton().setDisable(true);
         A1.getButton().setDisable(true);
         A2.getButton().setDisable(true);
@@ -121,10 +116,9 @@ public class PlayerSkillBar extends Pane {
         DEF.setOpacity(0.5);
     }
 
-    /**
-     * Enable tất cả buttons (khi đến lượt player)
-     */
     public void enableAllButtons() {
+        buttonsEnabled = true; // ✅ Cập nhật trạng thái
+
         ATK.getButton().setDisable(false);
         A1.getButton().setDisable(false);
         A2.getButton().setDisable(false);
@@ -140,10 +134,27 @@ public class PlayerSkillBar extends Pane {
         DEF.setOpacity(1.0);
     }
 
+    // ✅ THÊM: Kiểm tra trạng thái buttons
+    public boolean isButtonsEnabled() {
+        return buttonsEnabled;
+    }
+
+    public void disableHealButton() {
+        HEAL.getButton().setDisable(true);
+        HEAL.setOpacity(0.5);
+    }
+
+    public void disableDefendButton() {
+        DEF.getButton().setDisable(true);
+        DEF.setOpacity(0.5);
+    }
+
     // =====================================================
     // GAME OVER
     // =====================================================
     public void showGameOver(String txt) {
+        buttonsEnabled = false; // ✅ Game over = disable vĩnh viễn
+
         Label lb = new Label(txt);
         lb.setStyle(
                 "-fx-font-size: 50px;" +
@@ -201,13 +212,5 @@ public class PlayerSkillBar extends Pane {
                 -fx-font-weight: bold;
                 """.formatted(color));
         return b;
-    }
-    public void disableHealButton() {
-        HEAL.getButton().setDisable(true);
-        HEAL.setOpacity(0.5);
-    }
-    public void disableDefendButton() {
-        DEF.getButton().setDisable(true);
-        DEF.setOpacity(0.5);
     }
 }

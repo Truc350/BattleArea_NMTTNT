@@ -13,9 +13,8 @@ public abstract class Hero {
     protected double attackRange;
     protected List<Skill> skills = new ArrayList<Skill>();
 
-    // ✅ THÊM: Trạng thái phòng thủ
     protected boolean isDefending = false;
-    protected int baseDefense; // Lưu defense gốc
+    protected int baseDefense;
 
     public Hero(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         this.name = name;
@@ -26,7 +25,7 @@ public abstract class Hero {
         this.position = position;
         this.attack = attack;
         this.defense = defense;
-        this.baseDefense = defense; // ✅ Lưu defense gốc
+        this.baseDefense = defense;
         this.attackRange = 6.0;
         this.isDefending = false;
         initSkills();
@@ -45,73 +44,53 @@ public abstract class Hero {
         skills.add(new Skill("Mana Regen", 0, 3, 0, 10, 15));
     }
 
-    // ============== DEFENSE SYSTEM ==============
-
-    /**
-     * Kích hoạt tư thế phòng thủ
-     * Defense tăng gấp đôi cho đến hết lượt
-     */
     public void setDefending(boolean defending) {
         this.isDefending = defending;
 
         if (defending) {
-            // Tăng defense gấp đôi
             this.defense = this.baseDefense * 2;
-            System.out.println("   [" + name + "] Kích hoạt phòng thủ! Defense: " +
-                    baseDefense + " → " + defense);
         } else {
-            // Reset về defense gốc
             this.defense = this.baseDefense;
-            System.out.println("   [" + name + "] Hủy phòng thủ! Defense: " +
-                    defense + " → " + baseDefense);
         }
     }
 
-    /**
-     * Kiểm tra có đang phòng thủ không
-     */
+    public void activateDefending() {
+        if (this.isDefending) {
+            return;
+        }
+
+        this.isDefending = true;
+        this.defense = this.baseDefense * 2;
+    }
+
     public boolean isDefending() {
         return isDefending;
     }
 
-    /**
-     * Reset defense về trạng thái ban đầu
-     * Gọi khi kết thúc lượt
-     */
     public void resetDefense() {
         if (isDefending) {
             this.defense = this.baseDefense;
             this.isDefending = false;
-            System.out.println("   [" + name + "] Reset defense về bình thường: " + defense);
         }
     }
 
-    /**
-     * Set defense thủ công (dùng cho tính toán tạm thời)
-     */
     public void setDefense(int defense) {
         this.defense = defense;
     }
 
-    /**
-     * Lấy base defense (không bị ảnh hưởng bởi buff)
-     */
     public int getBaseDefense() {
         return baseDefense;
     }
 
-    // ============== PHƯƠNG THỨC GỐC (có random cho Marksman) ==============
     public boolean useSkill(String skillName, int currentTurn, Hero target) {
         for (Skill skill : skills) {
             if (skill.getName().equals(skillName) && skill.canUse(currentTurn, mp)) {
                 return skill.use(currentTurn, this, target);
             }
         }
-        System.out.println(name + " Không đủ mana hoặc skill còn cooldown!");
         return false;
     }
 
-    // ============== PHƯƠNG THỨC DETERMINISTIC (cho AI planning) ==============
     public boolean useSkillDeterministic(String skillName, int currentTurn,
                                          Hero target, int fixedDamage) {
         for (Skill skill : skills) {
@@ -127,53 +106,79 @@ public abstract class Hero {
         return false;
     }
 
-    /**
-     * Nhận damage với defense calculation
-     * ✅ Tự động tính defense buff từ isDefending
-     */
     public void takeDamage(int damage) {
-        System.out.println("   [Hero.takeDamage] " + name + " taking " + damage + " raw damage");
-        System.out.println("   [Hero.takeDamage] Defense: " + defense +
-                (isDefending ? " (DEFENDING x2)" : ""));
-
-        int effective = Math.max(0, damage - defense);
-
-        System.out.println("   [Hero.takeDamage] Effective damage: " + effective);
-        System.out.println("   [Hero.takeDamage] HP before: " + hp);
-
+        int effective = Math.max((int) (damage * 0.2), damage - defense);
         setHp(hp - effective);
-
-        System.out.println("   [Hero.takeDamage] HP after: " + hp);
     }
 
-    // ============== GETTERS & SETTERS ==============
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getName() {
+        return name;
+    }
 
-    public int getHp() { return hp; }
-    public void setHp(int hp) { this.hp = Math.max(0, Math.min(100, hp)); }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public int getMaxHP() { return maxHP; }
-    public void setMaxHP(int maxHP) { this.maxHP = maxHP; }
+    public int getHp() {
+        return hp;
+    }
 
-    public int getMp() { return mp; }
-    public void setMp(int mp) { this.mp = Math.max(0, Math.min(100, mp)); }
+    public void setHp(int hp) {
+        this.hp = Math.max(0, Math.min(100, hp));
+    }
 
-    public int getMaxMP() { return maxMP; }
-    public void setMaxMP(int maxMP) { this.maxMP = maxMP; }
+    public int getMaxHP() {
+        return maxHP;
+    }
 
-    public Point getPosition() { return position; }
-    public void setPosition(Point position) { this.position = position; }
+    public void setMaxHP(int maxHP) {
+        this.maxHP = maxHP;
+    }
 
-    public int getAttack() { return attack; }
-    public void setAttack(int attack) { this.attack = attack; }
+    public int getMp() {
+        return mp;
+    }
 
-    public int getDefense() { return defense; }
+    public void setMp(int mp) {
+        this.mp = Math.max(0, Math.min(100, mp));
+    }
 
-    public List<Skill> getSkills() { return skills; }
-    public void setSkills(List<Skill> skills) { this.skills = skills; }
+    public int getMaxMP() {
+        return maxMP;
+    }
 
-    // ============== FACTORY METHOD ==============
+    public void setMaxMP(int maxMP) {
+        this.maxMP = maxMP;
+    }
+
+    public Point getPosition() {
+        return position;
+    }
+
+    public void setPosition(Point position) {
+        this.position = position;
+    }
+
+    public int getAttack() {
+        return attack;
+    }
+
+    public void setAttack(int attack) {
+        this.attack = attack;
+    }
+
+    public int getDefense() {
+        return defense;
+    }
+
+    public List<Skill> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(List<Skill> skills) {
+        this.skills = skills;
+    }
+
     public static Hero getHero(HeroType type, String name, Point position) {
         int maxHP = 100;
         int maxMP = 100;
@@ -184,7 +189,7 @@ public abstract class Hero {
         switch (type) {
             case FIGHTER:
                 maxHP = 100;
-                maxMP = 80;
+                maxMP = 100;
                 attack = 15;
                 defense = 12;
                 attackRange = 8.0;
@@ -231,10 +236,10 @@ public abstract class Hero {
         }
 
         hero.setAttackRange(attackRange);
+        hero.setMp(hero.getMaxMP());
         return hero;
     }
 
-    // ============== MOVEMENT ==============
     public void moveAway(Hero target, double speed) {
         double dx = this.position.getX() - target.getPosition().getX();
         double dy = this.position.getY() - target.getPosition().getY();

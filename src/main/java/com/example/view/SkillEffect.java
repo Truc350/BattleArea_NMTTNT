@@ -127,15 +127,20 @@ public class SkillEffect {
             int explosionSize,
             Runnable onHit
     ) {
+        System.out.println("\n   [SkillEffect.castSkillAI] START");
+        System.out.println("   Start: (" + startX + ", " + startY + ")");
+
         ImageView player = arena.getPlayerView();
         ImageView enemy = arena.getEnemyView();
 
-        // ✅ LẤY VỊ TRÍ HIỆN TẠI THỰC TẾ
         double playerX = player.getLayoutX();
         double enemyX = enemy.getLayoutX();
 
-        // ✅ TÍNH HƯỚNG: AI ở bên TRÁI player → bay PHẢI, ngược lại → bay TRÁI
+        System.out.println("   Player X: " + playerX);
+        System.out.println("   Enemy X: " + enemyX);
+
         boolean flyRight = enemyX < playerX;
+        System.out.println("   Fly direction: " + (flyRight ? "RIGHT" : "LEFT"));
 
         ImageView skill = new ImageView(
                 new Image(SkillEffect.class.getResourceAsStream(imagePath))
@@ -146,21 +151,20 @@ public class SkillEffect {
         skill.setLayoutX(startX);
         skill.setLayoutY(startY);
 
-        // ✅ Flip ảnh nếu bay sang trái
         if (!flyRight) {
-            skill.setScaleX(-1);  // Lật ngang ảnh skill
+            skill.setScaleX(-1);
         }
 
         arena.getChildren().add(skill);
 
-        // ✅ TÍNH KHOẢNG CÁCH CẦN BAY
         double distance = Math.abs(playerX - enemyX);
+        System.out.println("   Distance to fly: " + distance + "px");
 
         TranslateTransition tt = new TranslateTransition(Duration.seconds(1), skill);
         if (flyRight) {
-            tt.setByX(distance);   // Bay sang phải
+            tt.setByX(distance);
         } else {
-            tt.setByX(-distance);  // Bay sang trái
+            tt.setByX(-distance);
         }
 
         AnimationTimer checker = new AnimationTimer() {
@@ -170,11 +174,11 @@ public class SkillEffect {
                 Bounds p = player.localToScene(player.getBoundsInLocal());
 
                 if (s.intersects(p)) {
+                    System.out.println("\n   ✅ [SkillEffect] COLLISION DETECTED!");
                     tt.stop();
                     this.stop();
                     arena.getChildren().remove(skill);
 
-                    // Show explosion TẠI VỊ TRÍ PLAYER HIỆN TẠI
                     showExplosion(
                             arena,
                             player.getLayoutX() + 50,
@@ -183,13 +187,12 @@ public class SkillEffect {
                             explosionSize
                     );
 
-                    System.out.println("   [SkillEffect AI] Callback triggered!");
-
-                    // ✅ GỌI CALLBACK - Controller xử lý logic game
+                    // ✅ GỌI CALLBACK
                     if (onHit != null) {
+                        System.out.println("   ✅ [SkillEffect] Calling onHit callback...");
                         onHit.run();
                     } else {
-                        System.err.println("   ❌ AI Callback is NULL!");
+                        System.err.println("   ❌ [SkillEffect] AI Callback is NULL!");
                     }
                     return;
                 }
@@ -197,15 +200,13 @@ public class SkillEffect {
         };
 
         tt.setOnFinished(e -> {
+            System.err.println("\n   ⚠️ [SkillEffect] Animation finished WITHOUT collision!");
             checker.stop();
             if (arena.getChildren().contains(skill)) {
                 arena.getChildren().remove(skill);
-                System.out.println("   [SkillEffect AI] Animation finished without hit - removing skill");
             }
         });
 
-        System.out.println("   [SkillEffect AI] Flying " + (flyRight ? "RIGHT" : "LEFT") +
-                " | Distance: " + distance + "px");
         checker.start();
         tt.play();
     }
