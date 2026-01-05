@@ -7,6 +7,7 @@ import com.example.view.PlayerSkillBar;
 import com.example.view.SkillEffect;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
@@ -25,8 +26,8 @@ public class BattleController {
     private String enemyCharacterPath;
 
     private static final double UI_TO_MODEL_SCALE = 50.0;
+    private static final double MOVE_STEP = 30.0;
 
-    // ✅ Trạng thái phòng thủ và heal trong turn hiện tại
     private boolean usedHealThisTurn = false;
     private boolean isDefending = false;
 
@@ -37,6 +38,41 @@ public class BattleController {
         initializeGame();
         syncHealthBars();
         syncPositionsToModel();
+        setupPlayerMovement();
+    }
+
+    // =====================================================
+    // PLAYER MOVEMENT CONTROLS
+    // =====================================================
+    private void setupPlayerMovement() {
+        arena.setOnKeyPressed(event -> {
+            KeyCode code = event.getCode();
+
+            if (skillBar == null || !skillBar.isButtonsEnabled()) {
+                return;
+            }
+
+            double currentX = arena.getPlayerView().getLayoutX();
+            double newX = currentX;
+
+            if (code == KeyCode.LEFT || code == KeyCode.A) {
+                newX = Math.max(50, currentX - MOVE_STEP);
+            } else if (code == KeyCode.RIGHT || code == KeyCode.D) {
+                newX = Math.min(1200, currentX + MOVE_STEP);
+            } else {
+                return;
+            }
+
+            arena.getPlayerView().setLayoutX(newX);
+            arena.getPlayerBar().setLayoutX(newX + 70);
+
+            syncPositionsToModel();
+
+            event.consume();
+        });
+
+        arena.setFocusTraversable(true);
+        arena.requestFocus();
     }
 
     // =====================================================
@@ -65,6 +101,7 @@ public class BattleController {
         );
 
         aiPlayer.getSkills().clear();
+        aiPlayer.setAttackRange(aiHeroTemplate.getAttackRange());
         for (Skill skill : aiHeroTemplate.getSkills()) {
             Skill newSkill = new Skill(
                     skill.getName(),
@@ -79,9 +116,6 @@ public class BattleController {
 
         game = new Game(player, aiPlayer);
         enemyCharacterPath = getEnemyPathFromType(aiType);
-        System.out.println("   Enemy Character Path: " + enemyCharacterPath);
-
-        System.out.println("🎮 Game initialized");
     }
 
     private Hero createHeroFromPath(String path, Point position) {
@@ -134,8 +168,6 @@ public class BattleController {
 
         player.getHero().setPosition(new Point(playerModelX, 0.0));
         aiPlayer.setPosition(new Point(aiModelX, 0.0));
-
-        System.out.println("   [Sync] Distance: " + game.getDistance());
     }
 
     private void updateCooldowns() {
@@ -159,17 +191,13 @@ public class BattleController {
     // PLAYER ACTIONS
     // =====================================================
     public void onAttack() {
-        System.out.println("\n⚔️ Player: Basic Attack (Turn " + currentTurn + ")");
         Hero hero = player.getHero();
 
         if (!game.isPlayerInRange()) {
-            System.out.println("   ❌ Ngoài tầm đánh! Distance: " + game.getDistance() +
-                    " | Range: " + hero.getAttackRange());
             showMessage("NGOÀI TẦM ĐÁNH!");
             return;
         }
 
-        // ✅ KHÓA NGAY KHI BẮT ĐẦU HÀNH ĐỘNG
         skillBar.disableAllButtons();
 
         double startX = arena.getPlayerView().getLayoutX() + 50;
@@ -182,29 +210,21 @@ public class BattleController {
                     boolean success = hero.useSkill("Basic Attack", currentTurn, aiPlayer);
 
                     if (success) {
-                        System.out.println("   ✅ Attack hit! AI HP: " + aiPlayer.getHp());
-                        if (hero.isDefending()) {
-                            System.out.println("   🛡️ Bạn đang phòng thủ - sẵn sàng chống đỡ!");
-                        }
-
                         syncHealthBars();
 
                         if (checkGameOver()) return;
 
                         endPlayerTurn();
                     } else {
-                        System.err.println("   ❌ Attack failed!");
                         skillBar.enableAllButtons();
                     }
                 });
     }
 
     public void onSkillA1() {
-        System.out.println("\n🔵 Player: Skill A1 (Turn " + currentTurn + ")");
         Hero hero = player.getHero();
 
         if (hero.getSkills().size() <= 2) {
-            System.err.println("   ❌ Skill A1 not available!");
             return;
         }
 
@@ -216,11 +236,9 @@ public class BattleController {
     }
 
     public void onSkillA2() {
-        System.out.println("\n🟡 Player: Skill A2 (Turn " + currentTurn + ")");
         Hero hero = player.getHero();
 
         if (hero.getSkills().size() <= 3) {
-            System.err.println("   ❌ Skill A2 not available!");
             return;
         }
 
@@ -232,11 +250,9 @@ public class BattleController {
     }
 
     public void onSkillA3() {
-        System.out.println("\n🟠 Player: Skill A3 (Turn " + currentTurn + ")");
         Hero hero = player.getHero();
 
         if (hero.getSkills().size() <= 4) {
-            System.err.println("   ❌ Skill A3 not available!");
             return;
         }
 
@@ -247,12 +263,8 @@ public class BattleController {
                 200);
     }
 
-    // ✅ HEAL - KHÔNG KẾT THÚC LƯỢT
     public void onHeal() {
-        System.out.println("\n💚 Player: Heal (Turn " + currentTurn + ")");
-
         if (usedHealThisTurn) {
-            System.out.println("   ⚠️ Đã dùng Heal rồi trong lượt này!");
             showMessage("ĐÃ DÙNG HEAL!");
             return;
         }
@@ -261,9 +273,6 @@ public class BattleController {
         boolean success = hero.useSkill("Mana Regen", currentTurn, hero);
 
         if (success) {
-            System.out.println("   ✅ Heal thành công! HP/MP đã hồi phục");
-            System.out.println("   → Bạn vẫn có thể đánh tiếp!");
-
             usedHealThisTurn = true;
             syncHealthBars();
             updateCooldowns();
@@ -272,32 +281,21 @@ public class BattleController {
 
             showMessage("HEAL! (+10 HP, +15 MP)", Color.GREEN);
 
-            // ✅ KHÔNG endPlayerTurn() - người chơi tiếp tục đánh!
-
         } else {
-            System.out.println("   ❌ Không thể Heal (cooldown hoặc đã dùng)");
             showMessage("HEAL ĐANG COOLDOWN!");
         }
     }
 
-    // ✅ DEFEND - KHÔNG KẾT THÚC LƯỢT
     public void onDefend() {
-        System.out.println("\n🛡️ Player: Defend (Turn " + currentTurn + ")");
-
         Hero hero = player.getHero();
 
         if (hero.isDefending()) {
-            System.out.println("   ⚠️ Đã bật Defend rồi!");
             showMessage("ĐÃ ĐANG PHÒNG THỦ!");
             return;
         }
 
         hero.setDefending(true);
         isDefending = true;
-
-        System.out.println("   → Player kích hoạt tư thế phòng thủ!");
-        System.out.println("   → Defense tăng gấp đôi!");
-        System.out.println("   → Bạn vẫn có thể đánh tiếp!");
 
         showMessage("PHÒNG THỦ KÍCH HOẠT!", Color.PURPLE);
 
@@ -308,8 +306,6 @@ public class BattleController {
         Hero hero = player.getHero();
 
         if (!game.isPlayerInRange()) {
-            System.out.println("   ❌ Ngoài tầm đánh! Player range: " + hero.getAttackRange() +
-                    " | Distance: " + game.getDistance());
             showMessage("NGOÀI TẦM ĐÁNH!");
             return;
         }
@@ -323,29 +319,24 @@ public class BattleController {
         }
 
         if (!canUse) {
-            System.out.println("   ❌ Không thể dùng skill: " + skillName);
             return;
         }
 
-        // ✅ KHÓA NGAY KHI BẮT ĐẦU HÀNH ĐỘNG
         skillBar.disableAllButtons();
 
         double startX = arena.getPlayerView().getLayoutX() + 50;
         double startY = arena.getPlayerView().getLayoutY() + 100;
 
         SkillEffect.castSkill(arena, startX, startY, imagePath, explosionPath, explosionSize, () -> {
-            System.out.println("   [BEFORE] AI HP: " + aiPlayer.getHp() + " | Player MP: " + hero.getMp());
             boolean success = hero.useSkill(skillName, currentTurn, aiPlayer);
 
             if (success) {
-                System.out.println("   [AFTER] AI HP: " + aiPlayer.getHp() + " | Player MP: " + hero.getMp());
                 syncHealthBars();
 
                 if (checkGameOver()) return;
 
                 endPlayerTurn();
             } else {
-                System.err.println("   ❌ Skill failed!");
                 skillBar.enableAllButtons();
                 updateCooldowns();
             }
@@ -381,20 +372,14 @@ public class BattleController {
     private void endPlayerTurn() {
         currentTurn++;
 
-        // ✅ Reset trạng thái hero
         player.getHero().resetDefense();
 
-        // ✅ Reset flag controller
         usedHealThisTurn = false;
         isDefending = false;
 
         updateCooldowns();
 
-        // ✅ KHÓA TẤT CẢ SKILL KHI ĐẾN LƯỢT AI
         skillBar.disableAllButtons();
-
-        System.out.println("📍 Kết thúc lượt Player. Turn hiện tại: " + currentTurn);
-        System.out.println("🔒 Đã khóa tất cả skill của Player - Đến lượt AI");
 
         PauseTransition delay = new PauseTransition(Duration.seconds(1));
         delay.setOnFinished(e -> executeAITurn());
@@ -402,19 +387,15 @@ public class BattleController {
     }
 
     private void executeAITurn() {
-        System.out.println("\n🤖 AI Turn " + currentTurn);
-
         syncPositionsToModel();
-
-        double distance = game.getDistance();
-        System.out.println("   Khoảng cách: " + distance);
-        System.out.println("   Trong tầm? " + game.isAIInRange());
 
         String action = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
 
-        System.out.println("   AI chọn: " + action);
-
-        if (action.contains("Move")) {
+        if (action.equals("Mana Regen")) {
+            handleAIHeal();
+        } else if (action.equals("Defend")) {
+            handleAIDefend();
+        } else if (action.contains("Move")) {
             handleAIMovement(action);
         } else if (action.equals("Jump Up")) {
             handleAIJumpUp();
@@ -424,23 +405,43 @@ public class BattleController {
     }
 
     private void handleAIMovement(String action) {
-        double currentX = arena.getEnemyView().getLayoutX();
-        double newX;
+        double distance = game.getDistance();
+        double aiRange = aiPlayer.getAttackRange();
 
-        if (action.equals("Move Closer")) {
-            newX = currentX + 50;
-            System.out.println("   → AI moving closer: " + currentX + " → " + newX);
-        } else {
-            newX = currentX - 50;
-            System.out.println("   → AI moving away: " + currentX + " → " + newX);
+        int stepsNeeded = (int) Math.ceil((distance - aiRange) / (Point.MOVE_SPEED * UI_TO_MODEL_SCALE));
+        stepsNeeded = Math.max(1, Math.min(stepsNeeded, 5));
+
+        performMultipleAIMoves(action, stepsNeeded, 0);
+    }
+
+    private void performMultipleAIMoves(String action, int totalSteps, int currentStep) {
+        if (currentStep >= totalSteps) {
+            boolean inRange = game.isAIInRange();
+
+            if (inRange) {
+                String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+                if (!nextAction.contains("Move") && !nextAction.equals("Jump Up") &&
+                        !nextAction.equals("Mana Regen") && !nextAction.equals("Defend")) {
+                    handleAISkill(nextAction);
+                } else {
+                    endAITurn();
+                }
+            } else {
+                endAITurn();
+            }
+            return;
         }
+
+        double currentX = arena.getEnemyView().getLayoutX();
+        double newX = action.equals("Move Closer") ? currentX + 50 : currentX - 50;
 
         aiPlayer.executeMovement(action, player.getHero());
 
         MovementController.moveTo(arena.getEnemyView(), newX, () -> {
             arena.getEnemyBar().setLayoutX(arena.getEnemyView().getLayoutX() + 70);
             syncPositionsToModel();
-            endAITurn();
+
+            performMultipleAIMoves(action, totalSteps, currentStep + 1);
         });
     }
 
@@ -454,15 +455,64 @@ public class BattleController {
             arena.getEnemyBar().setLayoutX(arena.getEnemyView().getLayoutX() + 70);
             syncHealthBars();
             syncPositionsToModel();
-            endAITurn();
+
+            String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+
+            if (!nextAction.contains("Move") && !nextAction.equals("Jump Up") &&
+                    !nextAction.equals("Mana Regen") && !nextAction.equals("Defend")) {
+                handleAISkill(nextAction);
+            } else {
+                endAITurn();
+            }
         });
     }
 
-    private void handleAISkill(String skillName) {
-        System.out.println("   → AI đang thực hiện skill: " + skillName);
+    private void handleAIHeal() {
+        boolean success = aiPlayer.useSkill("Mana Regen", currentTurn, aiPlayer);
 
+        if (success) {
+            syncHealthBars();
+
+            showMessage("AI HEAL!", Color.CYAN);
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(0.5));
+            delay.setOnFinished(e -> {
+                String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+
+                if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
+                        !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
+                    handleAISkill(nextAction);
+                } else {
+                    endAITurn();
+                }
+            });
+            delay.play();
+        } else {
+            endAITurn();
+        }
+    }
+
+    private void handleAIDefend() {
+        aiPlayer.setDefending(true);
+
+        showMessage("AI DEFEND!", Color.PURPLE);
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(0.5));
+        delay.setOnFinished(e -> {
+            String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game);
+
+            if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
+                    !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
+                handleAISkill(nextAction);
+            } else {
+                endAITurn();
+            }
+        });
+        delay.play();
+    }
+
+    private void handleAISkill(String skillName) {
         if (!game.isAIInRange()) {
-            System.err.println("   ❌ AI ngoài tầm! Distance: " + game.getDistance());
             endAITurn();
             return;
         }
@@ -470,15 +520,8 @@ public class BattleController {
         boolean success = aiPlayer.useSkill(skillName, currentTurn, player.getHero());
 
         if (!success) {
-            System.err.println("   ❌ AI không thể dùng skill: " + skillName);
             endAITurn();
             return;
-        }
-
-        System.out.println("   ✅ Skill executed! Player HP: " + player.getHero().getHp());
-
-        if (player.getHero().isDefending()) {
-            System.out.println("   🛡️ Player defense đã block một phần damage!");
         }
 
         syncHealthBars();
@@ -499,8 +542,6 @@ public class BattleController {
         }
 
         SkillEffect.castSkillAI(arena, startX, startY, imagePath, explosionPath, explosionSize, () -> {
-            System.out.println("   [Animation] Skill animation hoàn thành");
-
             if (checkGameOver()) return;
 
             endAITurn();
@@ -510,11 +551,8 @@ public class BattleController {
     private void endAITurn() {
         currentTurn++;
 
-        System.out.println("📍 Kết thúc lượt AI. Turn hiện tại: " + currentTurn);
-        System.out.println("   Distance: " + game.getDistance());
-        System.out.println("🔓 Mở khóa tất cả skill cho Player - Đến lượt Player");
+        aiPlayer.resetDefense();
 
-        // ✅ MỞ KHÓA TẤT CẢ SKILL KHI ĐẾN LƯỢT PLAYER
         skillBar.enableAllButtons();
         updateCooldowns();
     }
@@ -524,20 +562,17 @@ public class BattleController {
         boolean playerWin = false;
 
         if (player.getHero().getHp() <= 0) {
-            System.out.println("\n💀 GAME OVER - AI WINS!");
             skillBar.disableAllButtons();
             skillBar.showGameOver("YOU LOSE!");
             gameOver = true;
             playerWin = false;
         } else if (aiPlayer.getHp() <= 0) {
-            System.out.println("\n🎉 GAME OVER - PLAYER WINS!");
             skillBar.disableAllButtons();
             skillBar.showGameOver("YOU WIN!");
             gameOver = true;
             playerWin = true;
         }
 
-        // ✅ LƯU LỊCH SỬ KHI GAME OVER
         if (gameOver) {
             MatchHistory match = new MatchHistory(
                     playerWin,
@@ -551,9 +586,6 @@ public class BattleController {
             );
 
             MatchHistoryManager.getInstance().addMatch(match);
-
-            System.out.println("📜 Lịch sử đã được lưu: " +
-                    (playerWin ? "THẮNG" : "THUA"));
         }
 
         return gameOver;

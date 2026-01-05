@@ -7,7 +7,6 @@ import java.util.List;
 public class AIPlayer extends Hero {
     private static final int MAX_DEPTH = 7;
 
-    // Transposition table để cache các state đã tính
     private static class TranspositionEntry {
         int score;
         int depth;
@@ -18,72 +17,110 @@ public class AIPlayer extends Hero {
     }
     private HashMap<String, TranspositionEntry> transpositionTable = new HashMap<>();
 
+    private boolean usedHealThisTurn = false;
+    private boolean usedDefendThisTurn = false;
+
     public AIPlayer(String name, int maxHP, int maxMP, Point position, int attack, int defense) {
         super(name, maxHP, maxMP, position, attack, defense);
     }
 
-    /**
-     * Chọn action tốt nhất cho lượt hiện tại
-     * @param currentTurn Số lượt hiện tại
-     * @param opponent Đối thủ (Player)
-     * @param game Game instance
-     * @return Tên action được chọn
-     */
     public String chooseBestAction(int currentTurn, Hero opponent, Game game) {
         double distance = this.getPosition().distanceTo(opponent.getPosition());
         double myRange = this.getAttackRange();
-        System.out.println("   [AI] Khoảng cách đến player: " + distance);
-        System.out.println("   [AI] Tầm đánh: 6.0");
-        System.out.println("   [AI] Trong tầm? " + (distance <= 6.0));
 
-        // Nếu không trong tầm, di chuyển lại gần
-        if (distance > myRange) {
-            System.out.println("   [AI] NGOÀI tầm đánh, đang di chuyển lại gần");
-            return "Move Closer";
+        if (shouldHeal() && !usedHealThisTurn) {
+            usedHealThisTurn = true;
+            return "Mana Regen";
         }
 
-        System.out.println("   [AI] ✓ Trong tầm đánh, đang tính toán hành động tốt nhất...");
+        if (shouldDefend(opponent, distance) && !usedDefendThisTurn) {
+            usedDefendThisTurn = true;
+            this.setDefending(true);
+            return "Defend";
+        }
 
-        // Clear cache mỗi lượt mới
+        if (distance > myRange) {
+            return chooseMovementStrategy(opponent, distance);
+        }
+
         transpositionTable.clear();
 
-        // Tạo root state
         GameState root = new GameState(deepCopy(this), deepCopy(opponent), currentTurn);
         List<GameState> children = generateSuccessors(root, true);
-
-        System.out.println("   [AI] Generated " + children.size() + " possible actions");
 
         int bestScore = Integer.MIN_VALUE;
         Move bestMove = null;
 
-        // Tìm move tốt nhất
         for (GameState child : children) {
             int score = alphaBeta(child, MAX_DEPTH - 1, false, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            System.out.println("   [AI]   → " + child.getMove().getName() + " = " + score);
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = child.getMove();
             }
         }
 
-        System.out.println("🤖 AI chọn: " + bestMove.getName() + " | Điểm dự đoán: " + bestScore);
-
-        // ✅ CHỈ TRẢ VỀ TÊN - KHÔNG EXECUTE
         return bestMove.getName();
     }
 
-    /**
-     * Thuật toán Minimax với Alpha-Beta pruning
-     */
+    private boolean shouldHeal() {
+        boolean lowHP = this.getHp() < (this.getMaxHP() * 0.4);
+        boolean enoughMP = this.getMp() >= 0;
+        boolean hasHeal = false;
+
+        for (Skill skill : this.getSkills()) {
+            if (skill.getName().equals("Mana Regen")) {
+                hasHeal = skill.canUse(0, this.getMp());
+                break;
+            }
+        }
+
+        return lowHP && enoughMP && hasHeal;
+    }
+
+    private boolean shouldDefend(Hero opponent, double distance) {
+        boolean inDanger = distance <= opponent.getAttackRange();
+        boolean mediumHP = this.getHp() < (this.getMaxHP() * 0.6);
+        boolean opponentHasMana = opponent.getMp() > 15;
+
+        return inDanger && mediumHP && opponentHasMana && !this.isDefending();
+    }
+
+    private String chooseMovementStrategy(Hero opponent, double distance) {
+        double hpPercent = (double) this.getHp() / this.getMaxHP();
+        double mpPercent = (double) this.getMp() / this.getMaxMP();
+
+        if (hpPercent < 0.3) {
+            return "Jump Up";
+        }
+
+        if (mpPercent < 0.2) {
+            return "Jump Up";
+        }
+
+        if (distance > 10.0) {
+            return "Move Closer";
+        }
+
+        if (opponent.getHp() < 30 && this.getMp() > 15) {
+            return "Move Closer";
+        }
+
+        return "Move Closer";
+    }
+
+    public void resetTurnState() {
+        usedHealThisTurn = false;
+        usedDefendThisTurn = false;
+        this.resetDefense();
+    }
+
     private int alphaBeta(GameState state, int depth, boolean maximizingPlayer, int alpha, int beta) {
-        // Check transposition table
         String stateKey = getStateKey(state);
         TranspositionEntry cached = transpositionTable.get(stateKey);
         if (cached != null && cached.depth >= depth) {
             return cached.score;
         }
 
-        // Terminal conditions
         if (depth == 0 || state.isTerminal()) {
             int score = evaluate(state);
             transpositionTable.put(stateKey, new TranspositionEntry(score, depth));
@@ -98,7 +135,7 @@ public class AIPlayer extends Hero {
                 int eval = alphaBeta(child, depth - 1, false, alpha, beta);
                 maxEval = Math.max(maxEval, eval);
                 alpha = Math.max(alpha, maxEval);
-                if (beta <= alpha) break; // Alpha-Beta cutoff
+                if (beta <= alpha) break;
             }
             transpositionTable.put(stateKey, new TranspositionEntry(maxEval, depth));
             return maxEval;
@@ -108,60 +145,82 @@ public class AIPlayer extends Hero {
                 int eval = alphaBeta(child, depth - 1, true, alpha, beta);
                 minEval = Math.min(minEval, eval);
                 beta = Math.min(beta, minEval);
-                if (beta <= alpha) break; // Alpha-Beta cutoff
+                if (beta <= alpha) break;
             }
             transpositionTable.put(stateKey, new TranspositionEntry(minEval, depth));
             return minEval;
         }
     }
 
-    /**
-     * Tạo key cho state để cache
-     */
     private String getStateKey(GameState state) {
-        return String.format("%d_%d_%d_%d_%.1f",
+        return String.format("%d_%d_%d_%d_%.1f_%b",
                 state.aiHero.getHp(), state.aiHero.getMp(),
                 state.playerHero.getHp(), state.playerHero.getMp(),
-                state.aiHero.getPosition().distanceTo(state.playerHero.getPosition()));
+                state.aiHero.getPosition().distanceTo(state.playerHero.getPosition()),
+                state.aiHero.isDefending());
     }
 
-    /**
-     * Tạo tất cả state con có thể từ state hiện tại
-     */
     private List<GameState> generateSuccessors(GameState state, boolean maxPlayer) {
         List<GameState> successors = new ArrayList<>();
         Hero current = maxPlayer ? state.aiHero : state.playerHero;
         Hero target = maxPlayer ? state.playerHero : state.aiHero;
-        int nextTurn = state.turn + 1; // ✓ Tăng lượt
+        int nextTurn = state.turn + 1;
 
-        // Base copies
         Hero aiBase = deepCopy(state.aiHero);
         Hero plBase = deepCopy(state.playerHero);
 
-        // 1. TẤT CẢ SKILLS
         for (Skill skill : current.getSkills()) {
-            if (skill.canUse(state.turn, current.getMp())) {
+            if (skill.getName().equals("Mana Regen") && skill.canUse(state.turn, current.getMp())) {
                 Hero aiCopy = deepCopy(aiBase);
                 Hero plCopy = deepCopy(plBase);
                 Hero user = maxPlayer ? aiCopy : plCopy;
-                Hero targ = maxPlayer ? plCopy : aiCopy;
 
-                // Tính damage kỳ vọng (không random)
-                int expectedDamage = skill.getDamage();
+                user.setHp(Math.min(user.getMaxHP(), user.getHp() + skill.getHealHP()));
+                user.setMp(Math.min(user.getMaxMP(), user.getMp() + skill.getHealMP()));
 
-                // Nếu là Marksman, tính damage với crit rate
-                if (user instanceof Marksman) {
-                    expectedDamage = (int)(expectedDamage * 1.3); // 30% crit → avg 1.3x
-                }
+                successors.add(new GameState(aiCopy, plCopy, nextTurn,
+                        new Move("Mana Regen", 0, nextTurn)));
+            }
+        }
 
-                if (user.useSkillDeterministic(skill.getName(), state.turn, targ, expectedDamage)) {
-                    successors.add(new GameState(aiCopy, plCopy, nextTurn,
-                            new Move(skill.getName(), expectedDamage, nextTurn)));
+        if (!current.isDefending()) {
+            Hero aiCopy = deepCopy(aiBase);
+            Hero plCopy = deepCopy(plBase);
+            Hero user = maxPlayer ? aiCopy : plCopy;
+
+            user.setDefending(true);
+
+            successors.add(new GameState(aiCopy, plCopy, nextTurn,
+                    new Move("Defend", 0, nextTurn)));
+        }
+
+        double distance = current.getPosition().distanceTo(target.getPosition());
+        boolean inRange = distance <= current.getAttackRange();
+
+        if (inRange) {
+            for (Skill skill : current.getSkills()) {
+                if (!skill.getName().equals("Mana Regen") &&
+                        skill.canUse(state.turn, current.getMp())) {
+
+                    Hero aiCopy = deepCopy(aiBase);
+                    Hero plCopy = deepCopy(plBase);
+                    Hero user = maxPlayer ? aiCopy : plCopy;
+                    Hero targ = maxPlayer ? plCopy : aiCopy;
+
+                    int expectedDamage = skill.getDamage();
+
+                    if (user instanceof Marksman) {
+                        expectedDamage = (int)(expectedDamage * 1.3);
+                    }
+
+                    if (user.useSkillDeterministic(skill.getName(), state.turn, targ, expectedDamage)) {
+                        successors.add(new GameState(aiCopy, plCopy, nextTurn,
+                                new Move(skill.getName(), expectedDamage, nextTurn)));
+                    }
                 }
             }
         }
 
-        // 2. MOVE CLOSER
         {
             Hero aiCopy = deepCopy(aiBase);
             Hero plCopy = deepCopy(plBase);
@@ -172,7 +231,6 @@ public class AIPlayer extends Hero {
                     new Move("Move Closer", 0, nextTurn)));
         }
 
-        // 3. MOVE AWAY
         {
             Hero aiCopy = deepCopy(aiBase);
             Hero plCopy = deepCopy(plBase);
@@ -183,7 +241,6 @@ public class AIPlayer extends Hero {
                     new Move("Move Away", 0, nextTurn)));
         }
 
-        // 4. JUMP UP (lùi xa gấp đôi + bonus MP)
         {
             Hero aiCopy = deepCopy(aiBase);
             Hero plCopy = deepCopy(plBase);
@@ -195,81 +252,72 @@ public class AIPlayer extends Hero {
                     new Move("Jump Up", 0, nextTurn)));
         }
 
-        // Move ordering cho maxPlayer (damage cao → ưu tiên)
         if (maxPlayer) {
-            successors.sort((a, b) -> Integer.compare(b.getMove().getDamage(), a.getMove().getDamage()));
+            successors.sort((a, b) -> Integer.compare(b.getMove().getDamage(),
+                    a.getMove().getDamage()));
         }
 
         return successors;
     }
 
-    /**
-     * Hàm đánh giá state - Càng cao càng tốt cho AI
-     */
     private int evaluate(GameState s) {
         Hero ai = s.aiHero;
         Hero pl = s.playerHero;
 
-        // Terminal states
         if (ai.getHp() <= 0) return -1000000;
         if (pl.getHp() <= 0) return 1000000;
 
         int score = 0;
         double dist = ai.getPosition().distanceTo(pl.getPosition());
 
-        // === 1. HP - Quan trọng nhất (scale: ±4000) ===
         score += ai.getHp() * 40;
         score -= pl.getHp() * 40;
 
-        // === 2. Mana - Quan trọng thứ 2 (scale: ±1000) ===
         score += ai.getMp() * 10;
         score -= pl.getMp() * 8;
 
-        // === 3. Cơ hội giết (scale: 0-5000) ===
+        if (ai.isDefending()) {
+            score += 1500;
+        }
+        if (pl.isDefending()) {
+            score -= 1000;
+        }
+
         if (pl.getHp() <= 40) score += 2000;
         if (pl.getHp() <= 25) score += 3000;
         if (pl.getHp() <= 15) score += 5000;
 
-        // === 4. Nguy cơ chết (scale: 0-5000) ===
         if (ai.getHp() <= 40) score -= 2000;
         if (ai.getHp() <= 25) score -= 3000;
         if (ai.getHp() <= 15) score -= 5000;
 
-        // === 5. Ưu tiên ultimate khi có mana (scale: 0-2000) ===
         if (ai.getMp() >= 22) score += 800;
         if (ai.getMp() >= 30) score += 1200;
 
-        // === 6. Ưu tiên regen khi yếu (scale: 0-1500) ===
         if ((ai.getHp() <= 50 && ai.getMp() < 30) || ai.getMp() <= 15) {
             score += 1500;
         }
 
-        // === 7. Khoảng cách chiến thuật (scale: ±1500) ===
         if (dist <= 1.2) {
-            score -= 1500; // Quá gần = nguy hiểm
+            score -= 1500;
         } else if (dist <= 2.0) {
-            score += 500;  // Tầm đánh = tốt
+            score += 500;
         } else if (dist <= 3.5) {
-            score += 800;  // An toàn
+            score += 800;
         } else {
-            score -= 300;  // Quá xa = lãng phí
+            score -= 300;
         }
 
-        // === 8. Bonus khi kiting với low HP ===
         if (ai.getHp() <= 40 && dist > 3.0) {
             score += 1000;
         }
 
-        // === 9. Penalty khi player có nhiều MP (nguy hiểm) ===
         if (pl.getMp() >= 25) score -= 500;
         if (pl.getMp() >= 40) score -= 1000;
 
         return score;
     }
 
-    /**
-     * Deep copy một Hero để tạo state mới
-     */
     private Hero deepCopy(Hero original) {
         Hero copy = Hero.getHero(getHeroType(original), original.getName(),
                 new Point(original.getPosition().getX(), original.getPosition().getY()));
@@ -278,7 +326,6 @@ public class AIPlayer extends Hero {
         copy.setMp(original.getMp());
         copy.setDefense(original.getDefense());
         copy.setDefending(original.isDefending());
-
 
         copy.getSkills().clear();
 
@@ -292,9 +339,6 @@ public class AIPlayer extends Hero {
         return copy;
     }
 
-    /**
-     * Lấy HeroType từ instance
-     */
     private HeroType getHeroType(Hero hero) {
         if (hero instanceof Fighter) return HeroType.FIGHTER;
         if (hero instanceof Marksman) return HeroType.MARKSMAN;
@@ -303,23 +347,16 @@ public class AIPlayer extends Hero {
         return HeroType.FIGHTER;
     }
 
-    /**
-     * Thực hiện DI CHUYỂN trong game (không dùng cho skill)
-     * Chỉ gọi từ BattleController khi AI chọn Move/Jump
-     */
     public void executeMovement(String moveName, Hero opponent) {
         if ("Move Closer".equals(moveName)) {
             this.getPosition().moveToward(opponent.getPosition(), Point.MOVE_SPEED);
-            System.out.println("   → AI tiến lại gần");
         } else if ("Move Away".equals(moveName)) {
             this.moveAway(opponent, Point.MOVE_SPEED);
-            System.out.println("   → AI lùi xa");
         } else if ("Jump Up".equals(moveName)) {
             this.moveAway(opponent, Point.MOVE_SPEED * 2);
             if (this.getMp() < 20) {
                 this.setMp(Math.min(100, this.getMp() + 5));
             }
-            System.out.println("   → AI nhảy lùi (x2 distance)");
         }
     }
 }
