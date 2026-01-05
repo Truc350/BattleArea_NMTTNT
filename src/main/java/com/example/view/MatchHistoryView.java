@@ -35,13 +35,15 @@ public class MatchHistoryView {
 
         // Thống kê
         MatchHistoryManager manager = MatchHistoryManager.getInstance();
-        Label statsLabel = new Label(String.format("Tổng: %d trận | Thắng: %d | Thua: %d",
+        Label statsLabel = new Label(String.format("Tổng: %d trận\nThắng: %d\nThua: %d",
                 manager.getTotalMatches(), manager.getWins(), manager.getLosses()));
         statsLabel.setStyle("""
                 -fx-font-size: 18px;
                 -fx-font-weight: bold;
                 -fx-text-fill: #ECF0F1;
+                -fx-line-spacing: 5;
                 """);
+        statsLabel.setMinHeight(85);
         statsLabel.setEffect(new DropShadow(5, Color.BLACK));
 
         // Container cho danh sách trận đấu
@@ -127,44 +129,51 @@ public class MatchHistoryView {
                 """);
         row.setEffect(new DropShadow(8, Color.BLACK));
 
-        // Hình nhân vật
-        URL imgUrl = getClass().getResource(match.getCharacterPath());
-        ImageView characterImg = new ImageView();
-        if (imgUrl != null) {
-            characterImg.setImage(new Image(imgUrl.toExternalForm()));
-        }
-        characterImg.setFitWidth(70);
-        characterImg.setFitHeight(70);
-        characterImg.setPreserveRatio(true);
+        // ===== 1. PLAYER IMAGE =====
+        ImageView playerImg = createCharacterImage(match.getCharacterPath(), 60);
+        StackPane playerFrame = createImageFrame(playerImg);
 
-        // Khung cho ảnh
-        StackPane imgFrame = new StackPane(characterImg);
-        imgFrame.setStyle("""
-                -fx-background-color: rgba(0, 0, 0, 0.5);
-                -fx-border-color: #FFD700;
-                -fx-border-width: 2;
-                -fx-border-radius: 8;
-                -fx-background-radius: 8;
+        // ===== 2. VS LABEL =====
+        Label vsLabel = new Label("VS");
+        vsLabel.setStyle("""
+                -fx-font-size: 20px;
+                -fx-font-weight: bold;
+                -fx-text-fill: #FF6347;
                 """);
-        imgFrame.setPadding(new Insets(5));
+        vsLabel.setEffect(new DropShadow(5, Color.BLACK));
 
-        // Kết quả VICTORY/DEFEAT
-        Label resultLabel = new Label(match.isVictory() ? "VICTORY" : "DEFEAT");
+        // ===== 3. AI IMAGE =====
+        ImageView aiImg = createCharacterImage(match.getEnemyCharacterPath(), 60);
+        StackPane aiFrame = createImageFrame(aiImg);
+
+        // ===== 4. NGƯỜI THẮNG =====
+        VBox winnerBox = new VBox(3);
+        winnerBox.setAlignment(Pos.CENTER);
+        winnerBox.setPrefWidth(150);
+
+        Label winnerLabel;
         if (match.isVictory()) {
-            resultLabel.setStyle("""
-                    -fx-font-size: 28px;
+            winnerLabel = new Label("PLAYER THẮNG");
+            winnerLabel.setStyle("""
+                    -fx-font-size: 18px;
                     -fx-font-weight: bold;
                     -fx-text-fill: #FFD700;
+                    -fx-text-alignment: center;
                     """);
         } else {
-            resultLabel.setStyle("""
-                    -fx-font-size: 28px;
+            winnerLabel = new Label("AI THẮNG");
+            winnerLabel.setStyle("""
+                    -fx-font-size: 18px;
                     -fx-font-weight: bold;
                     -fx-text-fill: #E74C3C;
+                    -fx-text-alignment: center;
                     """);
         }
-        resultLabel.setEffect(new DropShadow(5, Color.BLACK));
-        resultLabel.setPrefWidth(200);
+        winnerLabel.setEffect(new DropShadow(5, Color.BLACK));
+        winnerBox.getChildren().add(winnerLabel);
+
+        winnerLabel.setAlignment(Pos.CENTER);
+        winnerBox.setAlignment(Pos.CENTER);
 
         // Spacer để đẩy thời gian sang phải
         Region spacer = new Region();
@@ -196,7 +205,7 @@ public class MatchHistoryView {
 
         inforBox.getChildren().addAll(modelLabel, timeLabel, hpLabel);
 
-        row.getChildren().addAll(imgFrame, resultLabel, spacer, inforBox);
+        row.getChildren().addAll(playerFrame, vsLabel, aiFrame, winnerBox, spacer, inforBox);
 
         // Hover effect
         row.setOnMouseEntered(e -> {
@@ -224,6 +233,31 @@ public class MatchHistoryView {
         });
 
         return row;
+    }
+
+    private ImageView createCharacterImage(String path, int size) {
+        ImageView img = new ImageView();
+        URL imgUrl = getClass().getResource(path);
+        if (imgUrl != null) {
+            img.setImage(new Image(imgUrl.toExternalForm()));
+        }
+        img.setFitWidth(size);
+        img.setFitHeight(size);
+        img.setPreserveRatio(true);
+        return img;
+    }
+
+    private StackPane createImageFrame(ImageView img) {
+        StackPane frame = new StackPane(img);
+        frame.setStyle("""
+                -fx-background-color: rgba(0, 0, 0, 0.5);
+                -fx-border-color: #FFD700;
+                -fx-border-width: 2;
+                -fx-border-radius: 8;
+                -fx-background-radius: 8;
+                """);
+        frame.setPadding(new Insets(5));
+        return frame;
     }
 
     // Tạo nút quay lại

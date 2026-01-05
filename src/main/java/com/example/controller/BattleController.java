@@ -22,6 +22,7 @@ public class BattleController {
     private int currentTurn = 1;
 
     private String characterPath;
+    private String enemyCharacterPath;
 
     private static final double UI_TO_MODEL_SCALE = 50.0;
 
@@ -77,6 +78,8 @@ public class BattleController {
         }
 
         game = new Game(player, aiPlayer);
+        enemyCharacterPath = getEnemyPathFromType(aiType);
+        System.out.println("   Enemy Character Path: " + enemyCharacterPath);
 
         System.out.println("🎮 Game initialized");
     }
@@ -111,6 +114,15 @@ public class BattleController {
         }
 
         return Hero.getHero(type, name, position);
+    }
+
+    private String getEnemyPathFromType(HeroType type) {
+        return switch (type) {
+            case FIGHTER -> "/img/character/dausi_trai.png";
+            case MAGE -> "/img/character/phap_su_trai.png";
+            case MARKSMAN -> "/img/character/xathu.png";
+            case SUPPORT -> "/img/character/trothu_trai.png";
+        };
     }
 
     // =====================================================
@@ -539,6 +551,7 @@ public class BattleController {
             MatchHistory match = new MatchHistory(
                     playerWin,
                     characterPath,
+                    enemyCharacterPath,
                     LocalDateTime.now(),
                     player.getHero().getName(),
                     aiPlayer.getName(),

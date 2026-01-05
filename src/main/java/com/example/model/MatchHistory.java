@@ -6,20 +6,22 @@ import java.time.format.DateTimeFormatter;
 public class MatchHistory {
     private boolean isVictory;
     private String characterPath;
+    private String enemyCharacterPath;
     private LocalDateTime matchTime;
     private String playerName;
     private String enemyName;
     private int playerFinalHP;
     private int enemyFinalHP;
 
-    public MatchHistory(boolean isVictory, String characterPath, LocalDateTime matchTime, String playerName, String enemyName, int enemyFinalHP, int playerFinalHP) {
+    public MatchHistory(boolean isVictory, String characterPath, String enemyCharacterPath, LocalDateTime matchTime, String playerName, String enemyName, int playerFinalHP, int enemyFinalHP) {
         this.isVictory = isVictory;
         this.characterPath = characterPath;
+        this.enemyCharacterPath = enemyCharacterPath;
         this.matchTime = matchTime;
         this.playerName = playerName;
         this.enemyName = enemyName;
-        this.enemyFinalHP = enemyFinalHP;
         this.playerFinalHP = playerFinalHP;
+        this.enemyFinalHP = enemyFinalHP;
     }
 
     public boolean isVictory() {
@@ -53,5 +55,9 @@ public class MatchHistory {
 
     public int getEnemyFinalHP() {
         return enemyFinalHP;
+    }
+
+    public String getEnemyCharacterPath() {
+        return enemyCharacterPath;
     }
 }
