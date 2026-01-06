@@ -2,9 +2,18 @@ package com.example.view;
 
 import com.example.controller.GameController;
 import com.example.controller.MovementController;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 import java.util.List;
 import java.util.Random;
@@ -25,6 +34,8 @@ public class ArenaView extends Pane {
     private HealthBar enemyBar;    // Thanh HP/MP AI
     private GameController controller;  // Tham chiếu đến controller chính
     private String enemyPath;
+
+    private TurnOrderCallback turnOrderCallback;
 
     public ArenaView(String arenaPath, String playerPath) {
         this.controller = GameController.getInstance();
@@ -134,5 +145,141 @@ public class ArenaView extends Pane {
 
     public String getEnemyImagePath() {
         return enemyPath;
+    }
+
+    // ===== HIỂN THỊ DIALOG CHỌN TURN ORDER =====
+    public void showTurnOrderDialog(TurnOrderCallback callback) {
+        this.turnOrderCallback = callback;
+
+        // Tạo overlay tối
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: transparent;");
+        overlay.setPrefSize(1300, 700);
+
+        // Container chính
+        VBox dialogBox = new VBox(6);
+        dialogBox.setAlignment(Pos.CENTER);
+        dialogBox.setPadding(new Insets(12, 20, 12, 20));
+        dialogBox.setStyle("""
+                -fx-background-color: rgba(30, 30, 30, 0.95);
+                -fx-border-color: #FFD700;
+                -fx-border-width: 2.5;
+                -fx-border-radius: 12;
+                -fx-background-radius: 20;
+                """);
+        dialogBox.setMaxWidth(350);
+        dialogBox.setMaxHeight(180);
+        dialogBox.setEffect(new DropShadow(20, Color.GOLD));
+
+        // Tiêu đề
+        Label title = new Label("CHỌN LƯỢT ĐI");
+        title.setStyle("""
+                -fx-font-size: 16px;
+                -fx-font-weight: bold;
+                -fx-text-fill: #FFD700;
+                """);
+        title.setEffect(new DropShadow(10, Color.BLACK));
+
+        // Mô tả
+        Label description = new Label("Bạn muốn đánh trước hay để AI đánh trước?");
+        description.setStyle("""
+                -fx-font-size: 14px;
+                -fx-text-fill: white;
+                -fx-text-alignment: center;
+                """);
+        description.setWrapText(true);
+        description.setMaxWidth(280);
+
+        // Nút Player đánh trước
+        Button playerFirstBtn = createDialogButton(
+                "TÔI ĐI TRƯỚC",
+                "#2ecc71",
+                "#27ae60"
+        );
+
+        // Nút AI đánh trước
+        Button aiFirstBtn = createDialogButton(
+                "AI ĐI TRƯỚC",
+                "#e74c3c",
+                "#c0392b"
+        );
+
+        // Container cho 2 nút
+        HBox buttonBox = new HBox(12);
+        buttonBox.setAlignment(Pos.CENTER);
+        buttonBox.getChildren().addAll(playerFirstBtn, aiFirstBtn);
+
+        // Thêm vào dialog
+        dialogBox.getChildren().addAll(title, description, buttonBox);
+
+        // Thêm vào overlay
+        overlay.getChildren().add(dialogBox);
+
+        // Xử lý sự kiện
+        playerFirstBtn.setOnAction(e -> {
+            getChildren().remove(overlay);
+            if (callback != null) {
+                callback.onPlayerFirst();
+            }
+        });
+
+        aiFirstBtn.setOnAction(e -> {
+            getChildren().remove(overlay);
+            if (callback != null) {
+                callback.onAIFirst();
+            }
+        });
+
+        // Thêm overlay vào ArenaView
+        getChildren().add(overlay);
+    }
+
+    private Button createDialogButton(String text, String normalColor, String hoverColor) {
+        Button btn = new Button(text);
+        btn.setPrefSize(120, 35);
+        btn.setStyle(String.format("""
+                -fx-font-size: 13px;
+                -fx-font-weight: bold;
+                -fx-background-color: %s;
+                -fx-text-fill: white;
+                -fx-background-radius: 12;
+                -fx-cursor: hand;
+                """, normalColor));
+        btn.setEffect(new DropShadow(8, Color.BLACK));
+
+        // Hover effect
+        btn.setOnMouseEntered(e -> {
+            btn.setStyle(String.format("""
+                    -fx-font-size: 16px;
+                    -fx-font-weight: bold;
+                    -fx-background-color: %s;
+                    -fx-text-fill: white;
+                    -fx-background-radius: 12;
+                    -fx-cursor: hand;
+                    """, hoverColor));
+            btn.setScaleX(1.05);
+            btn.setScaleY(1.05);
+        });
+
+        btn.setOnMouseExited(e -> {
+            btn.setStyle(String.format("""
+                    -fx-font-size: 16px;
+                    -fx-font-weight: bold;
+                    -fx-background-color: %s;
+                    -fx-text-fill: white;
+                    -fx-background-radius: 12;
+                    -fx-cursor: hand;
+                    """, normalColor));
+            btn.setScaleX(1.0);
+            btn.setScaleY(1.0);
+        });
+
+        return btn;
+    }
+
+    // Interface callback
+    public interface TurnOrderCallback {
+        void onPlayerFirst();
+        void onAIFirst();
     }
 }

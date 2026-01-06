@@ -19,6 +19,9 @@ public class AIPlayer extends Hero {
             this.depth = depth;
         }
     }
+    //  Lưu kết quả đã tính
+    // Key: Trạng thái game (HP, MP, position, defend status)
+    // Điểm số + depth
     private HashMap<String, TranspositionEntry> transpositionTable = new HashMap<>();
 
     private boolean usedHealThisTurn = false;
@@ -175,37 +178,41 @@ public class AIPlayer extends Hero {
     }
 
     private int alphaBeta(GameState state, int depth, boolean maximizingPlayer, int alpha, int beta) {
+        // 1. ktra cache (Transposition Table)
         String stateKey = getStateKey(state);
         TranspositionEntry cached = transpositionTable.get(stateKey);
         if (cached != null && cached.depth >= depth) {
             return cached.score;
         }
 
+        // 2. dieu kien dung
         if (depth == 0 || state.isTerminal()) {
-            int score = evaluate(state);
+            int score = evaluate(state); // goi heuristic
             transpositionTable.put(stateKey, new TranspositionEntry(score, depth));
             return score;
         }
 
+        // 3. tao trang thai con
         List<GameState> children = generateSuccessors(state, maximizingPlayer);
 
-        if (maximizingPlayer) {
+        // 4. duyet cay voi alpha-beta prunning
+        if (maximizingPlayer) { // luot AI (Max)
             int maxEval = Integer.MIN_VALUE;
             for (GameState child : children) {
                 int eval = alphaBeta(child, depth - 1, false, alpha, beta);
                 maxEval = Math.max(maxEval, eval);
                 alpha = Math.max(alpha, maxEval);
-                if (beta <= alpha) break;
+                if (beta <= alpha) break; // prunning cat bo
             }
             transpositionTable.put(stateKey, new TranspositionEntry(maxEval, depth));
             return maxEval;
-        } else {
+        } else { // Luot Player (min)
             int minEval = Integer.MAX_VALUE;
             for (GameState child : children) {
                 int eval = alphaBeta(child, depth - 1, true, alpha, beta);
                 minEval = Math.min(minEval, eval);
                 beta = Math.min(beta, minEval);
-                if (beta <= alpha) break;
+                if (beta <= alpha) break; // prunning cat bo
             }
             transpositionTable.put(stateKey, new TranspositionEntry(minEval, depth));
             return minEval;
@@ -324,9 +331,11 @@ public class AIPlayer extends Hero {
         Hero ai = s.aiHero;
         Hero pl = s.playerHero;
 
-        if (ai.getHp() <= 0) return -1000000;
-        if (pl.getHp() <= 0) return 1000000;
+        // Dkien thang / thua
+        if (ai.getHp() <= 0) return -1000000; // AI chet -> thua
+        if (pl.getHp() <= 0) return 1000000; // Player chet -> thang
 
+        // uoc luong trang thai
         int score = 0;
         double dist = ai.getPosition().distanceTo(pl.getPosition());
 
@@ -337,41 +346,48 @@ public class AIPlayer extends Hero {
         score -= pl.getMp() * 8;
 
         if (ai.isDefending()) {
-            score += 1500;
+            score += 1500; // AI đang defend = AN TOÀN
         }
         if (pl.isDefending()) {
-            score -= 1000;
+            score -= 1000; // Player defend = KHÓ ĐÁNH
         }
 
+        // HP thấp của Player (hạ gục)
         if (pl.getHp() <= 40) score += 2000;
         if (pl.getHp() <= 25) score += 3000;
         if (pl.getHp() <= 15) score += 5000;
 
+        // HP thấp của AI (Nguy hiểm)
         if (ai.getHp() <= 40) score -= 2000;
         if (ai.getHp() <= 25) score -= 3000;
         if (ai.getHp() <= 15) score -= 5000;
 
+        // MP AI cao(Có thể dùng skills mạnh)
         if (ai.getMp() >= 22) score += 800;
         if (ai.getMp() >= 30) score += 1200;
 
+        // MP thấp hoặc HP thấp (Cần heal)
         if ((ai.getHp() <= 50 && ai.getMp() < 30) || ai.getMp() <= 15) {
             score += 1500;
         }
 
+        // Khoảng cách
         if (dist <= 1.2) {
-            score -= 1500;
+            score -= 1500; // // Quá gần
         } else if (dist <= 2.0) {
-            score += 500;
+            score += 500; // Khoảng cách tốt để tấn công
         } else if (dist <= 3.5) {
-            score += 800;
+            score += 800; // Tối ưu
         } else {
-            score -= 300;
+            score -= 300; // Quá xa
         }
 
+        // AI yếu và xa = Nên lùi
         if (ai.getHp() <= 40 && dist > 3.0) {
-            score += 1000;
+            score += 1000; // Khuyến khích giữ khoảng cách
         }
 
+        // Player có MP cao = Nguy hiểm
         if (pl.getMp() >= 25) score -= 500;
         if (pl.getMp() >= 40) score -= 1000;
 

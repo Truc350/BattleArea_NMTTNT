@@ -31,6 +31,8 @@ public class BattleController {
     private boolean usedHealThisTurn = false;
     private boolean isDefending = false;
 
+    private boolean gameStarted = false;
+
     public BattleController(ArenaView arena, String characterPath) {
         this.arena = arena;
         this.characterPath = characterPath;
@@ -39,6 +41,42 @@ public class BattleController {
         syncHealthBars();
         syncPositionsToModel();
         setupPlayerMovement();
+    }
+
+    public void startGameAIFirst() {
+        if (gameStarted) return;
+        gameStarted = true;
+
+        System.out.println("\n🎮 GAME START - AI GOES FIRST!");
+
+        // Disable player controls
+        if (skillBar != null) {
+            skillBar.disableAllButtons();
+        }
+
+        // Show message
+        showMessage("AI'S TURN!", Color.ORANGE);
+
+        // Start with AI's turn after a short delay
+        PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+        delay.setOnFinished(e -> executeAITurn());
+        delay.play();
+    }
+
+    public void startGamePlayerFirst() {
+        if (gameStarted) return;
+        gameStarted = true;
+
+        System.out.println("\n🎮 GAME START - PLAYER GOES FIRST!");
+
+        // Enable player controls
+        if (skillBar != null) {
+            skillBar.enableAllButtons();
+            updateCooldowns();
+        }
+
+        // Show message
+        showMessage("YOUR TURN!", Color.LIGHTGREEN);
     }
 
     // =====================================================
@@ -386,6 +424,8 @@ public class BattleController {
 
         skillBar.disableAllButtons();
 
+        showMessage("AI'S TURN!", Color.ORANGE);
+
         PauseTransition delay = new PauseTransition(Duration.seconds(1));
         delay.setOnFinished(e -> executeAITurn());
         delay.play();
@@ -487,12 +527,6 @@ public class BattleController {
                 // Sau khi heal, AI tiếp tục chọn action để tấn công
                 String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game, true);
 
-//                if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
-//                        !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
-//                    handleAISkill(nextAction);
-//                } else {
-//                    endAITurn();
-//                }
                 handleAISkill(nextAction);
             });
             delay.play();
@@ -510,12 +544,6 @@ public class BattleController {
         delay.setOnFinished(e -> {
             String nextAction = aiPlayer.chooseBestAction(currentTurn, player.getHero(), game, true);
 
-//            if (!nextAction.equals("Mana Regen") && !nextAction.equals("Defend") &&
-//                    !nextAction.contains("Move") && !nextAction.equals("Jump Up")) {
-//                handleAISkill(nextAction);
-//            } else {
-//                endAITurn();
-//            }
             handleAISkill(nextAction);
         });
         delay.play();
@@ -562,6 +590,8 @@ public class BattleController {
         currentTurn++;
 
         aiPlayer.resetDefense();
+
+        showMessage("YOUR TURN!", Color.LIGHTGREEN);
 
         skillBar.enableAllButtons();
         updateCooldowns();
