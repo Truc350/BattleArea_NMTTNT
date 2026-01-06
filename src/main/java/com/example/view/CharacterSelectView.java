@@ -15,7 +15,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-
+import javafx.scene.shape.SVGPath;
 import java.net.URL;
 
 public class CharacterSelectView {
@@ -120,6 +120,59 @@ public class CharacterSelectView {
             chars.getChildren().add(frame);
         }
 
+        // ====== NÚT MŨI TÊN QUAY LẠI (TRÊN TRÁI) ======
+        Button backButton = new Button();
+
+        // Tạo mũi tên SVG
+        SVGPath arrow = new SVGPath();
+        arrow.setContent("M 15 8 L 8 15 L 15 22 M 8 15 L 30 15");
+        arrow.setStroke(Color.WHITE);
+        arrow.setStrokeWidth(2.5);
+        arrow.setFill(Color.TRANSPARENT);
+
+        backButton.setGraphic(arrow);
+        backButton.setStyle("""
+            -fx-background-color: rgba(211, 47, 47, 0.8);
+            -fx-padding: 8 12;
+            -fx-background-radius: 8;
+            -fx-cursor: hand;
+            """);
+        backButton.setEffect(new DropShadow(5, Color.BLACK));
+
+        backButton.setOnMouseEntered(e -> {
+            backButton.setStyle("""
+                -fx-background-color: rgba(244, 67, 54, 0.9);
+                -fx-padding: 8 12;
+                -fx-background-radius: 8;
+                -fx-cursor: hand;
+                """);
+            backButton.setScaleX(1.1);
+            backButton.setScaleY(1.1);
+        });
+
+        backButton.setOnMouseExited(e -> {
+            backButton.setStyle("""
+                -fx-background-color: rgba(211, 47, 47, 0.8);
+                -fx-padding: 8 12;
+                -fx-background-radius: 8;
+                -fx-cursor: hand;
+                """);
+            backButton.setScaleX(1.0);
+            backButton.setScaleY(1.0);
+        });
+
+        // Click để quay lại trang chọn sàn
+        backButton.setOnAction(e -> {
+            ArenaSelectView arenaView = new ArenaSelectView();
+            Stage currentStage = this.stage;
+            if (currentStage == null && backButton.getScene() != null && backButton.getScene().getWindow() != null) {
+                currentStage = (Stage) backButton.getScene().getWindow();
+            }
+            if (currentStage != null) {
+                currentStage.setScene(arenaView.getScene());
+            }
+        });
+
         // ====== NÚT GIỚI THIỆU NHÂN VẬT (NHỎ HỤT) ======
         Button infoButton = new Button("GIỚI THIỆU NHÂN VẬT");
         infoButton.setStyle("""
@@ -205,11 +258,15 @@ public class CharacterSelectView {
         VBox centerContent = new VBox(40, title, chars);
         centerContent.setAlignment(Pos.CENTER);
 
+        // Đặt nút mũi tên ở góc trên trái
+        StackPane.setAlignment(backButton, Pos.TOP_LEFT);
+        StackPane.setMargin(backButton, new Insets(20, 0, 0, 20));
+
         // Đặt nút ở góc phải dưới
         StackPane.setAlignment(infoButton, Pos.BOTTOM_RIGHT);
         StackPane.setMargin(infoButton, new Insets(0, 30, 30, 0));
 
-        background.getChildren().addAll(centerContent, infoButton);
+        background.getChildren().addAll(centerContent, backButton, infoButton);
 
         return new Scene(background, 1300, 700);
     }
