@@ -38,7 +38,8 @@ public class GameView {
         }
 
         battleController.setSkillBar(skillBar);
-        skillBar.enableAllButtons();
+        // Don't enable buttons here - AI will go first
+        // skillBar.enableAllButtons();
 
         skillBar.setLayoutX(1000);
         skillBar.setLayoutY(550);
@@ -47,6 +48,25 @@ public class GameView {
         arena.requestFocus();
         Scene scene = new Scene(arena, 1300, 700);
         scene.setOnMouseClicked(e -> arena.requestFocus());
+
+//        // START THE GAME - AI GOES FIRST
+//        battleController.startGame();
+
+        // HIỂN THỊ DIALOG CHỌN TURN ORDER NGAY TRONG ARENA
+        arena.showTurnOrderDialog(new ArenaView.TurnOrderCallback() {
+            @Override
+            public void onPlayerFirst() {
+                System.out.println("✅ Player chọn đi trước!");
+                battleController.startGamePlayerFirst();
+            }
+
+            @Override
+            public void onAIFirst() {
+                System.out.println("✅ Player chọn AI đi trước!");
+                battleController.startGameAIFirst();
+            }
+        });
+
         return scene;
     }
 
